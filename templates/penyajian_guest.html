@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tools Kependudukan Kabupaten/Kota</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Lora:ital,wght@0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.44.0/iconfont/tabler-icons.min.css">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+</head>
+<body>
+
+<div class="mobile-topbar">
+    <div class="brand-inline">
+        <i class="ti ti-building-community"></i>
+        <span>DUKCAPIL YOGYAKARTA</span>
+    </div>
+    <button type="button" class="mobile-toggle" id="mobileToggle" aria-label="Buka menu navigasi">
+        <i class="ti ti-menu-2"></i>
+    </button>
+</div>
+
+<div class="mobile-overlay" id="mobileOverlay"></div>
+
+<div class="app-layout">
+    <!-- ============ SIDEBAR ============ -->
+    <aside class="sidebar" id="sidebar">
+        <div class="brand">
+            <span class="brand-badge">
+                <i class="ti ti-shield-check"></i> RESMI DUKCAPIL
+            </span>
+            <div class="title">
+                <span class="title-icon"><i class="ti ti-database"></i></span>
+                <span>Tools Kependudukan</span>
+            </div>
+            <p class="sub">Kota Yogyakarta</p>
+        </div>
+
+        <div class="sidebar-divider"></div>
+
+        <div class="sidebar-section-label">Navigasi Utama</div>
+        <nav class="sidebar-nav">
+            <a href="{{ url_for('penyajian_guest_page') }}" class="active">
+                <i class="ti ti-chart-pie-2"></i> Penyajian DKB
+            </a>
+        </nav>
+
+        <div class="sidebar-foot">
+            <div class="system-status">
+                <div class="system-status-indicator">
+                    <span class="dot"></span>
+                    <span>Sistem Aktif</span>
+                </div>
+                <span style="color:#64748b; font-size:10.5px;">v2.1 DKB</span>
+            </div>
+        </div>
+    </aside>
+
+    <!-- ============ MAIN CONTENT ============ -->
+    <main class="content">
+        <div class="top-bar-crumbs">
+            <a href="{{ url_for('home') }}"><i class="ti ti-home"></i> Beranda</a>
+            <i class="ti ti-chevron-right"></i>
+            <span>Penyajian Data</span>
+            <i class="ti ti-chevron-right"></i>
+            <span class="current">Tabel Pivot &amp; Visualisasi DKB</span>
+        </div>
+
+        <div class="page-title">
+            <div>Penyajian Data Kependudukan Bersih</div>
+            <div style="font-size:12px; font-weight:600; color:var(--ink-500); display:flex; align-items:center; gap:6px;">
+                <i class="ti ti-map-pin" style="color:var(--primary);"></i> Kota Yogyakarta, D.I. Yogyakarta
+            </div>
+        </div>
+
+        <!-- Filter Panel -->
+        <div class="panel">
+            <div class="panel-header">
+                <div class="panel-title">
+                    <i class="ti ti-filter"></i> Filter Parameter Data Penduduk
+                </div>
+            </div>
+
+            <div class="filter-grid">
+                <div class="field">
+                    <label for="f-tanggal"><i class="ti ti-calendar"></i> Periode Semester / Tanggal</label>
+                    <select id="f-tanggal">
+                        <option value="">- Semua tanggal -</option>
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label for="f-fungsi"><i class="ti ti-category"></i> Fungsi / Kategori Laporan</label>
+                    <select id="f-fungsi">
+                        <option value="">- Semua deskripsi -</option>
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label for="f-kecamatan"><i class="ti ti-building-community"></i> Kemantren (Kecamatan)</label>
+                    <select id="f-kecamatan">
+                        <option value="">- Semua kecamatan -</option>
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label for="f-kelurahan"><i class="ti ti-map-pin"></i> Kelurahan</label>
+                    <select id="f-kelurahan">
+                        <option value="">- Semua kelurahan -</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; margin-top:20px; flex-wrap:wrap; border-top:1px solid var(--line-subtle); padding-top:14px;">
+                <small style="color:var(--ink-500); display:flex; align-items:center; gap:6px;">
+                    <i class="ti ti-info-circle"></i> Filter RW dan RT aktif otomatis saat data rincian tersedia pada tingkat kelurahan terpilih.
+                </small>
+                <button class="btn btn-primary" id="btn-cari" type="button">
+                    <i class="ti ti-search" aria-hidden="true"></i> Tampilkan Data
+                </button>
+            </div>
+        </div>
+
+        <!-- Panel Tabel Pivot -->
+        <div class="panel">
+            <div class="panel-header">
+                <div class="report-heading" id="table-title">
+                    <strong>SEMUA FUNGSI</strong>
+                    <span>KOTA YOGYAKARTA</span>
+                    <span>BULAN —</span>
+                </div>
+                <div class="table-actions">
+                    <span id="table-orientation-status" class="orientation-status" aria-live="polite">
+                        <i class="ti ti-layout-columns"></i> Tampilan horizontal
+                    </span>
+                    <button class="btn" id="btn-orientation" type="button" aria-label="Ubah arah penyajian tabel">
+                        <i class="ti ti-arrows-exchange"></i> Ubah ke vertikal
+                    </button>
+                    <button class="btn" id="btn-download" type="button" disabled title="Fitur unduh Excel belum tersedia untuk versi saat ini">
+                        <i class="ti ti-download" aria-hidden="true"></i> Unduh Excel
+                    </button>
+                </div>
+            </div>
+
+            <div id="table-wrap" class="table-scroll"></div>
+        </div>
+
+        <!-- Panel Grafik Analitis -->
+        <div class="panel sage-top">
+            <div class="panel-header">
+                <div class="panel-title">
+                    <i class="ti ti-chart-bar"></i> Visualisasi Jumlah Penduduk
+                </div>
+                <span class="badge"><i class="ti ti-eye"></i> Grafik Dinamis</span>
+            </div>
+            <div class="chart-box">
+                <canvas id="chart"></canvas>
+            </div>
+        </div>
+
+        <p class="source-note">
+            <i class="ti ti-check"></i> Sumber Data: Konsolidasi Bersih (DKB) Dinas Kependudukan dan Pencatatan Sipil Kota Yogyakarta
+        </p>
+    </main>
+</div>
+
+<script>
+// Toggle Mobile Sidebar
+const mobileToggle = document.getElementById('mobileToggle');
+const sidebar = document.getElementById('sidebar');
+const mobileOverlay = document.getElementById('mobileOverlay');
+
+if (mobileToggle && sidebar && mobileOverlay) {
+    mobileToggle.addEventListener('click', () => {
+        sidebar.classList.toggle('open');
+        mobileOverlay.classList.toggle('open');
+    });
+    mobileOverlay.addEventListener('click', () => {
+        sidebar.classList.remove('open');
+        mobileOverlay.classList.remove('open');
+    });
+}
+</script>
+
+<script defer src="{{ url_for('static', filename='js/penyajian-ui.js') }}"></script>
+</body>
+</html>

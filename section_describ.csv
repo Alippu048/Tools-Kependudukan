@@ -1,0 +1,40 @@
+801	Jumlah Penduduk WNI dan OA	Pelayanan
+891	Jumlah Penduduk WNI dan OA (DKB)	DKB
+802	Jumlah Kartu Keluarga	Pelayanan
+892	Jumlah Kartu Keluarga (DKB)	DKB
+803	Jumlah Wajib KTP	Pelayanan
+893	Jumlah Wajib KTP (DKB)	DKB
+806	Jumlah Wajib KTP yang Sudah Rekam KTP-el	Pelayanan
+896	Jumlah Wajib KTP yang Sudah Rekam KTP-el (DKB)	DKB
+101	Jumlah Penduduk berdasarkan Pendidikan Terakhir	Pelayanan
+191	Jumlah Penduduk berdasarkan Pendidikan Terakhir (DKB)	DKB
+201	Jumlah Penduduk berdasarkan Jenis Pekerjaan	Pelayanan
+291	Jumlah Penduduk berdasarkan Jenis Pekerjaan (DKB)	DKB
+301	Jumlah Penduduk berdasarkan Status Hubungan Keluarga	Pelayanan
+391	Jumlah Penduduk berdasarkan Status Hubungan Keluarga (DKB)	DKB
+401	Jumlah Penduduk berdasarkan Golongan Darah	Pelayanan
+491	Jumlah Penduduk berdasarkan Golongan Darah (DKB)	DKB
+501	Jumlah Penduduk berdasarkan Agama	Pelayanan
+591	Jumlah Penduduk berdasarkan Agama (DKB)	DKB
+601	Jumlah Penduduk berdasarkan Status Kawin	Pelayanan
+691	Jumlah Penduduk berdasarkan Status Kawin (DKB)	DKB
+701	Jumlah Penduduk berdasarkan Kelainan Fisik dan Mental	Pelayanan
+791	Jumlah Penduduk berdasarkan Kelainan Fisik dan Mental (DKB)	DKB
+804	Jumlah Penduduk berdasarkan Umur Tunggal	Pelayanan
+894	Jumlah Penduduk berdasarkan Umur Tunggal (DKB)	DKB
+808	Jumlah Penduduk berdasarkan Kelompok Umur	Pelayanan
+898	Jumlah Penduduk berdasarkan Kelompok Umur (DKB)	DKB
+303	Jumlah Penduduk usia 0 sd 18 tahun	Pelayanan
+393	Jumlah Penduduk usia 0 sd 18 tahun (DKB)	DKB
+304	Jumlah Penduduk usia 0 sd 18 tahun yang memiliki Akta Kelahiran	Pelayanan
+394	Jumlah Penduduk usia 0 sd 18 tahun yang memiliki Akta Kelahiran (DKB)	DKB
+807	Jumlah Penduduk yang Memiliki KIA	Pelayanan
+897	Jumlah Penduduk yang Memiliki KIA (DKB)	DKB
+805	Jumlah Kepemilikan Akta	Pelayanan
+895	Jumlah Kepemilikan Akta (DKB)	DKB
+305	Jumlah Kelahiran	Pelayanan
+395	Jumlah Kelahiran (DKB)	DKB
+306	Jumlah Kematian	Pelayanan
+396	Jumlah Kematian (DKB)	DKB
+307	Jumlah Pindah	Pelayanan
+308	Jumlah Kedatangan	Pelayanan

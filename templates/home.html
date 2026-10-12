@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tools Kependudukan Kabupaten/Kota</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Lora:ital,wght@0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.44.0/iconfont/tabler-icons.min.css">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+<div class="mobile-topbar">
+    <div class="brand-inline">
+        <i class="ti ti-building-community"></i>
+        <span>DUKCAPIL YOGYAKARTA</span>
+    </div>
+    <button type="button" class="mobile-toggle" id="mobileToggle" aria-label="Buka menu navigasi">
+        <i class="ti ti-menu-2"></i>
+    </button>
+</div>
+
+<div class="mobile-overlay" id="mobileOverlay"></div>
+
+<div class="app-layout">
+    <!-- ============ SIDEBAR ============ -->
+    <aside class="sidebar" id="sidebar">
+        <div class="brand">
+            <span class="brand-badge">
+                <i class="ti ti-shield-check"></i> RESMI DUKCAPIL
+            </span>
+            <div class="title">
+                <span class="title-icon"><i class="ti ti-database"></i></span>
+                <span>Tools Kependudukan</span>
+            </div>
+            <p class="sub">Kota Yogyakarta</p>
+        </div>
+
+        <div class="sidebar-divider"></div>
+
+        <div class="sidebar-section-label">Navigasi Utama</div>
+        <nav class="sidebar-nav">
+            <a href="{{ url_for('home') }}" class="active">
+                <i class="ti ti-smart-home"></i> Beranda
+            </a>
+            <a href="{{ url_for('penyajian_page') }}">
+                <i class="ti ti-chart-pie-2"></i> Penyajian DKB
+            </a>
+            <a href="{{ url_for('upload_page') }}">
+                <i class="ti ti-file-upload"></i> Import Data Excel
+            </a>
+            <a href="{{ url_for('import_page') }}">
+                <i class="ti ti-database-import"></i> Sistem Import Cepat
+            </a>
+        </nav>
+
+        <div class="sidebar-foot">
+            <div class="system-status">
+                <div class="system-status-indicator">
+                    <span class="dot"></span>
+                    <span>Sistem Aktif</span>
+                </div>
+                <span style="color:#64748b; font-size:10.5px;">v2.1 DKB</span>
+            </div>
+        </div>
+    </aside>
+
+    <!-- ============ MAIN CONTENT ============ -->
+    <main class="content">
+        <div class="top-bar-crumbs">
+            <a href="{{ url_for('home') }}"><i class="ti ti-home"></i> Beranda</a>
+            <i class="ti ti-chevron-right"></i>
+            <span class="current">Dashboard Utama</span>
+        </div>
+
+        <div class="page-title">
+            <div>Portal Pengelolaan &amp; Penyajian DKB</div>
+        </div>
+
+        <!-- Hero Banner -->
+        <div class="hero-banner">
+            <div class="hero-banner-inner">
+                <div class="hero-banner-badge">
+                    <i class="ti ti-sparkles"></i> Data Kependudukan Bersih (DKB)
+                </div>
+                <h2>Dinas Kependudukan &amp; Pencatatan Sipil Kota Yogyakarta</h2>
+                <p>
+                    Platform internal terpadu untuk pemrosesan, agregasi otomatis file Excel laporan penduduk,
+                    serta visualisasi data kependudukan dinamis hingga level Kemantren dan Kelurahan.
+                </p>
+                <div class="hero-meta">
+                    <span class="hero-pill"><i class="ti ti-circle-check-filled"></i> Status Data: Terkonsolidasi Semester 2026</span>
+                    <span class="hero-pill"><i class="ti ti-database"></i> Database: MySQL/MariaDB Ready</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stat / KPI Grid -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon blue">
+                    <i class="ti ti-users-group"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-label">Total Penduduk</div>
+                    <div class="stat-value">415.624</div>
+                    <div class="stat-sub">Jiwa Terkonsolidasi DKB</div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon amber">
+                    <i class="ti ti-building-community"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-label">Kemantren (Kecamatan)</div>
+                    <div class="stat-value">14</div>
+                    <div class="stat-sub">Wilayah Administratif</div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon emerald">
+                    <i class="ti ti-map-2"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-label">Kelurahan</div>
+                    <div class="stat-value">45</div>
+                    <div class="stat-sub">Terdata Lengkap</div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon purple">
+                    <i class="ti ti-file-analytics"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-label">Dataset Agregat</div>
+                    <div class="stat-value">50+</div>
+                    <div class="stat-sub">Kategori &amp; Fungsi DKB</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Feature Cards Grid -->
+        <div class="feature-grid">
+            <a href="{{ url_for('penyajian_page') }}" class="feature-card">
+                <div class="feature-card-header">
+                    <div class="feature-card-icon blue">
+                        <i class="ti ti-chart-infographic"></i>
+                    </div>
+                    <span class="feature-badge blue">Visualisasi &amp; Pivot</span>
+                </div>
+                <h3>Penyajian Data Penduduk (DKB)</h3>
+                <p>
+                    Eksplorasi tabel pivot data penduduk horizontal dan vertikal per Kemantren, Kelurahan, RW,
+                    serta RT dilengkapi grafik analitis interaktif.
+                </p>
+                <div class="feature-card-cta">
+                    Buka Penyajian Data <i class="ti ti-arrow-narrow-right"></i>
+                </div>
+            </a>
+
+            <a href="{{ url_for('upload_page') }}" class="feature-card gold-accent">
+                <div class="feature-card-header">
+                    <div class="feature-card-icon amber">
+                        <i class="ti ti-table-import"></i>
+                    </div>
+                    <span class="feature-badge amber">Batch Processor</span>
+                </div>
+                <h3>Import &amp; Pemetaan File Excel</h3>
+                <p>
+                    Unggah banyak file Excel agregat sekaligus, deteksi otomatis kolom jenis kelamin (LK/PR/JML),
+                    preview hasil mapping, dan simpan langsung ke database.
+                </p>
+                <div class="feature-card-cta" style="color:var(--accent-gold);">
+                    Mulai Import File <i class="ti ti-arrow-narrow-right"></i>
+                </div>
+            </a>
+        </div>
+
+        <!-- Workflow Info Panel -->
+        <div class="panel">
+            <div class="panel-header">
+                <div class="panel-title">
+                    <i class="ti ti-timeline"></i> Alur Kerja Pengelolaan Data DKB
+                </div>
+            </div>
+            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:18px;">
+                <div style="background:var(--surface-alt); padding:16px 18px; border-radius:var(--radius-md); border-left:3px solid var(--primary);">
+                    <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px; font-weight:700; font-size:14px; color:var(--ink-900);">
+                        <span style="width:24px; height:24px; border-radius:50%; background:var(--primary); color:#fff; display:grid; place-items:center; font-size:12px;">1</span>
+                        Unggah File Agregat
+                    </div>
+                    <p style="font-size:12.5px; color:var(--ink-600); margin:0; line-height:1.5;">
+                        Pilih satu atau beberapa file Excel format agregat DKB semesteran dari folder database.
+                    </p>
+                </div>
+
+                <div style="background:var(--surface-alt); padding:16px 18px; border-radius:var(--radius-md); border-left:3px solid var(--accent-gold);">
+                    <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px; font-weight:700; font-size:14px; color:var(--ink-900);">
+                        <span style="width:24px; height:24px; border-radius:50%; background:var(--accent-gold); color:#fff; display:grid; place-items:center; font-size:12px;">2</span>
+                        Deteksi &amp; Pemetaan
+                    </div>
+                    <p style="font-size:12.5px; color:var(--ink-600); margin:0; line-height:1.5;">
+                        Sistem membedah kolom LK, PR, JML, dan kode wilayah secara otomatis serta menghasilkan pratinjau tabel.
+                    </p>
+                </div>
+
+                <div style="background:var(--surface-alt); padding:16px 18px; border-radius:var(--radius-md); border-left:3px solid var(--accent-emerald);">
+                    <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px; font-weight:700; font-size:14px; color:var(--ink-900);">
+                        <span style="width:24px; height:24px; border-radius:50%; background:var(--accent-emerald); color:#fff; display:grid; place-items:center; font-size:12px;">3</span>
+                        Sinkronisasi &amp; Analisis
+                    </div>
+                    <p style="font-size:12.5px; color:var(--ink-600); margin:0; line-height:1.5;">
+                        Data tersimpan ke tabel <code>DATA_LAPORAN_PENDUDUK</code> dan langsung siap disajikan dalam pivot &amp; grafik.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script>
+// Toggle Mobile Sidebar
+const mobileToggle = document.getElementById('mobileToggle');
+const sidebar = document.getElementById('sidebar');
+const mobileOverlay = document.getElementById('mobileOverlay');
+
+if (mobileToggle && sidebar && mobileOverlay) {
+    mobileToggle.addEventListener('click', () => {
+        sidebar.classList.toggle('open');
+        mobileOverlay.classList.toggle('open');
+    });
+    mobileOverlay.addEventListener('click', () => {
+        sidebar.classList.remove('open');
+        mobileOverlay.classList.remove('open');
+    });
+}
+</script>
+
+</body>
+</html>

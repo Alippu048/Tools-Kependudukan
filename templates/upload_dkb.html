@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tools Kependudukan Kabupaten/Kota</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Lora:ital,wght@0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.44.0/iconfont/tabler-icons.min.css">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+<div class="mobile-topbar">
+    <div class="brand-inline">
+        <i class="ti ti-building-community"></i>
+        <span>DUKCAPIL YOGYAKARTA</span>
+    </div>
+    <button type="button" class="mobile-toggle" id="mobileToggle" aria-label="Buka menu navigasi">
+        <i class="ti ti-menu-2"></i>
+    </button>
+</div>
+
+<div class="mobile-overlay" id="mobileOverlay"></div>
+
+<div class="app-layout">
+    <!-- ============ SIDEBAR ============ -->
+    <aside class="sidebar" id="sidebar">
+        <div class="brand">
+            <span class="brand-badge">
+                <i class="ti ti-shield-check"></i> RESMI DUKCAPIL
+            </span>
+            <div class="title">
+                <span class="title-icon"><i class="ti ti-database"></i></span>
+                <span>Tools Kependudukan</span>
+            </div>
+            <p class="sub">Kota Yogyakarta</p>
+        </div>
+
+        <div class="sidebar-divider"></div>
+
+        <div class="sidebar-section-label">Navigasi Utama</div>
+        <nav class="sidebar-nav">
+            <a href="{{ url_for('home') }}">
+                <i class="ti ti-smart-home"></i> Beranda
+            </a>
+            <a href="{{ url_for('penyajian_page') }}">
+                <i class="ti ti-chart-pie-2"></i> Penyajian DKB
+            </a>
+            <a href="{{ url_for('upload_page') }}" class="active">
+                <i class="ti ti-file-upload"></i> Import Data Excel
+            </a>
+            <a href="{{ url_for('import_page') }}">
+                <i class="ti ti-database-import"></i> Sistem Import Cepat
+            </a>
+        </nav>
+
+        <div class="sidebar-foot">
+            <div class="system-status">
+                <div class="system-status-indicator">
+                    <span class="dot"></span>
+                    <span>Sistem Aktif</span>
+                </div>
+                <span style="color:#64748b; font-size:10.5px;">v2.1 DKB</span>
+            </div>
+        </div>
+    </aside>
+
+    <!-- ============ MAIN CONTENT ============ -->
+    <main class="content">
+        <div class="top-bar-crumbs">
+            <a href="{{ url_for('home') }}"><i class="ti ti-home"></i> Beranda</a>
+            <i class="ti ti-chevron-right"></i>
+            <span>Penyajian Data</span>
+            <i class="ti ti-chevron-right"></i>
+            <span class="current">Import File Excel ke Database</span>
+        </div>
+
+        <div class="page-title">
+            <div>Import &amp; Pemetaan Data Excel</div>
+            <div style="font-size:12px; font-weight:600; color:var(--ink-500); display:flex; align-items:center; gap:6px;">
+                <i class="ti ti-table-alias" style="color:var(--primary);"></i> Tabel: <code>DATA_LAPORAN_PENDUDUK</code>
+            </div>
+        </div>
+
+        <!-- Panel Upload Form -->
+        <div class="panel">
+            <div class="panel-header">
+                <div class="panel-title">
+                    <i class="ti ti-cloud-upload"></i> Unggah Dokumen Excel Agregat
+                </div>
+                <span class="badge"><i class="ti ti-files"></i> Multi-File Didukung</span>
+            </div>
+
+            <form id="uploadForm" enctype="multipart/form-data">
+                <label class="dropzone" id="dropzone">
+                    <input type="file" id="file" name="files" accept=".xlsx,.xls" multiple>
+                    <div class="upload-icon">
+                        <i class="ti ti-upload"></i>
+                    </div>
+                    <strong>Klik untuk memilih file Excel</strong>
+                    <span>atau tarik dan lepaskan beberapa file <code>.xlsx</code> / <code>.xls</code> ke area ini</span>
+                    <div class="formats-badge">
+                        <i class="ti ti-file-spreadsheet"></i> Format Didukung: Microsoft Excel (.xlsx, .xls) &bull; Maks. 200MB Total
+                    </div>
+                </label>
+
+                <div id="fileList" class="file-list"></div>
+
+                <div class="actions">
+                    <button type="button" class="btn" id="clearButton">
+                        <i class="ti ti-trash"></i> Bersihkan Daftar
+                    </button>
+                    <button type="submit" class="btn btn-primary" id="analyzeButton">
+                        <i class="ti ti-sparkles"></i> Analisis &amp; Petakan Kolom
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Panel Hasil Analisis & Mapping -->
+        <div id="mapping" class="panel hidden">
+            <div class="panel-header">
+                <div class="panel-title">
+                    <i class="ti ti-binary-tree"></i> Hasil Analisis &amp; Pemetaan Kolom
+                </div>
+            </div>
+            <p id="summary" class="help-text" style="margin-top:0; font-size:13px; color:var(--ink-700); font-weight:600;"></p>
+            <div id="fileResults"></div>
+        </div>
+
+        <!-- Panel Preview Gabungan -->
+        <div id="preview" class="panel hidden">
+            <div class="panel-header">
+                <div class="panel-title">
+                    <i class="ti ti-table"></i> Pratinjau Gabungan Hasil Pemetaan
+                </div>
+                <a class="btn" href="{{ url_for('export') }}" target="_blank">
+                    <i class="ti ti-file-export"></i> Ekspor Hasil ke Excel
+                </a>
+            </div>
+            <div class="table-wrap">
+                <table class="data-table" id="previewTable"></table>
+            </div>
+        </div>
+
+        <!-- Panel Simpan Database -->
+        <div id="database" class="panel sage-top hidden">
+            <div class="panel-header">
+                <div class="panel-title">
+                    <i class="ti ti-database-check"></i> Simpan Data ke Database MySQL
+                </div>
+                <button type="button" class="btn btn-primary" id="dbButton">
+                    <i class="ti ti-cloud-upload"></i> Upload Semua ke Database
+                </button>
+            </div>
+            <p style="font-size:13px; color:var(--ink-600); margin:0 0 12px;">
+                Seluruh baris dari file yang berhasil dipetakan akan digabungkan dan di-insert secara aman ke dalam tabel <code>DATA_LAPORAN_PENDUDUK</code>.
+            </p>
+            <div id="message" class="message"></div>
+        </div>
+    </main>
+</div>
+
+<script>
+// Toggle Mobile Sidebar
+const mobileToggle = document.getElementById('mobileToggle');
+const sidebar = document.getElementById('sidebar');
+const mobileOverlay = document.getElementById('mobileOverlay');
+
+if (mobileToggle && sidebar && mobileOverlay) {
+    mobileToggle.addEventListener('click', () => {
+        sidebar.classList.toggle('open');
+        mobileOverlay.classList.toggle('open');
+    });
+    mobileOverlay.addEventListener('click', () => {
+        sidebar.classList.remove('open');
+        mobileOverlay.classList.remove('open');
+    });
+}
+</script>
+
+<script src="{{ url_for('static', filename='js/upload-ui.js') }}"></script>
+</body>
+</html>

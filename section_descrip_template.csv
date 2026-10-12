@@ -1,0 +1,41 @@
+1	801	Jumlah Penduduk WNI dan OA	Pelayanan
+2	891	Jumlah Penduduk WNI dan OA (DKB)	DKB
+3	802	Jumlah Kartu Keluarga	Pelayanan
+4	892	Jumlah Kartu Keluarga (DKB)	DKB
+5	803	Jumlah Wajib KTP	Pelayanan
+6	893	Jumlah Wajib KTP (DKB)	DKB
+7	806	Jumlah Wajib KTP yang Sudah Rekam KTP-el	Pelayanan
+8	896	Jumlah Wajib KTP yang Sudah Rekam KTP-el (DKB)	DKB
+9	101	Jumlah Penduduk berdasarkan Pendidikan Terakhir	Pelayanan
+10	191	Jumlah Penduduk berdasarkan Pendidikan Terakhir (DKB)	DKB
+11	201	Jumlah Penduduk berdasarkan Jenis Pekerjaan	Pelayanan
+12	291	Jumlah Penduduk berdasarkan Jenis Pekerjaan (DKB)	DKB
+13	301	Jumlah Penduduk berdasarkan Status Hubungan Keluarga	Pelayanan
+14	391	Jumlah Penduduk berdasarkan Status Hubungan Keluarga (DKB)	DKB
+15	401	Jumlah Penduduk berdasarkan Golongan Darah	Pelayanan
+16	491	Jumlah Penduduk berdasarkan Golongan Darah (DKB)	DKB
+17	501	Jumlah Penduduk berdasarkan Agama	Pelayanan
+18	591	Jumlah Penduduk berdasarkan Agama (DKB)	DKB
+19	601	Jumlah Penduduk berdasarkan Status Kawin	Pelayanan
+20	691	Jumlah Penduduk berdasarkan Status Kawin (DKB)	DKB
+21	701	Jumlah Penduduk berdasarkan Kelainan Fisik dan Mental	Pelayanan
+22	791	Jumlah Penduduk berdasarkan Kelainan Fisik dan Mental (DKB)	DKB
+23	804	Jumlah Penduduk berdasarkan Umur Tunggal	Pelayanan
+24	894	Jumlah Penduduk berdasarkan Umur Tunggal (DKB)	DKB
+25	808	Jumlah Penduduk berdasarkan Kelompok Umur	Pelayanan
+26	898	Jumlah Penduduk berdasarkan Kelompok Umur (DKB)	DKB
+27	303	Jumlah Penduduk usia 0 sd 18 tahun	Pelayanan
+28	393	Jumlah Penduduk usia 0 sd 18 tahun (DKB)	DKB
+29	304	Jumlah Penduduk usia 0 sd 18 tahun yang memiliki Akta Kelahiran	Pelayanan
+30	394	Jumlah Penduduk usia 0 sd 18 tahun yang memiliki Akta Kelahiran (DKB)	DKB
+31	807	Jumlah Penduduk yang Memiliki KIA	Pelayanan
+32	897	Jumlah Penduduk yang Memiliki KIA (DKB)	DKB
+33	805	Jumlah Kepemilikan Akta	Pelayanan
+34	895	Jumlah Kepemilikan Akta (DKB)	DKB
+35	305	Jumlah Kelahiran	Pelayanan
+36	395	Jumlah Kelahiran (DKB)	DKB
+37	306	Jumlah Kematian	Pelayanan
+38	396	Jumlah Kematian (DKB)	DKB
+39	307	Jumlah Pindah	Pelayanan
+40	308	Jumlah Kedatangan	Pelayanan
+
