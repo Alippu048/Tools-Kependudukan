@@ -4,6 +4,10 @@ import json
 import csv
 import io
 import tempfile
+import hashlib
+import hmac
+import secrets
+from functools import wraps
 from datetime import datetime
 from decimal import Decimal
 import pandas as pd
@@ -16,7 +20,8 @@ from flask import (
     jsonify,
     send_file,
     redirect,
-    url_for
+    url_for,
+    session
 )
 
 from importer import (
@@ -26,6 +31,9 @@ from importer import (
 
 
 app = Flask(__name__)
+app.secret_key = os.getenv("FLASK_SECRET_KEY") or secrets.token_hex(32)
+app.config["SESSION_COOKIE_HTTPONLY"] = True
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 
 
 
@@ -177,6 +185,50 @@ def get_mysql_connection():
         database=DB_CONFIG["database"],
         autocommit=True
     )
+
+
+def authenticate_user(username, password):
+    connection = get_mysql_connection()
+    cursor = None
+    try:
+        cursor = connection.cursor(dictionary=True)
+        cursor.execute(
+            """
+            SELECT `SIAK_USER`, `SIAK_PASSWORD`, `FULLNAME`, `USER_LEVEL`
+            FROM `SIAK_USER`
+            WHERE `SIAK_USER` = %s
+            LIMIT 1
+            """,
+            (username,)
+        )
+        user = cursor.fetchone()
+        if not user:
+            return None
+
+        stored_password = str(user.get("SIAK_PASSWORD") or "").strip().lower()
+        submitted_hash = hashlib.md5(password.encode("utf-8")).hexdigest()
+        if not hmac.compare_digest(stored_password, submitted_hash):
+            return None
+
+        return {
+            "username": user["SIAK_USER"],
+            "fullname": user.get("FULLNAME") or user["SIAK_USER"],
+            "user_level": user.get("USER_LEVEL")
+        }
+    finally:
+        if cursor is not None:
+            cursor.close()
+        connection.close()
+
+
+def login_required(view):
+    @wraps(view)
+    def wrapped_view(*args, **kwargs):
+        if "username" not in session:
+            return redirect(url_for("admin_login_page"))
+        return view(*args, **kwargs)
+
+    return wrapped_view
 
 
 # ============================================================
@@ -385,36 +437,58 @@ def load_section_descrip_master():
 
 @app.route("/")
 def index():
+    return render_template("dashboard_umum.html")
+
+
+@app.route("/admin/login")
+def admin_login_page():
+    if "username" in session:
+        return redirect(url_for("home"))
     return render_template("login.html")
 
 
 @app.route("/login", methods=["POST"])
 def login_page():
-    username = request.form.get("username", "")
+    username = request.form.get("username", "").strip()
     password = request.form.get("password", "")
 
-    if username == "admin" and password == "admin123":
+    try:
+        user = authenticate_user(username, password)
+    except mysql.connector.Error:
+        app.logger.exception("Login database verification failed")
+        return render_template(
+            "login.html",
+            error="Login tidak dapat diverifikasi. Periksa koneksi dan tabel pengguna."
+        ), 503
+
+    if user:
+        session.clear()
+        session.update(user)
         return redirect(url_for("home"))
 
-    return "Login gagal"
+    return render_template("login.html", error="Username atau password tidak sesuai."), 401
 
 
 @app.route("/home")
+@login_required
 def home():
     return render_template("home.html")
 
 
 @app.route("/import")
+@login_required
 def import_page():
     return render_template("index.html")
 
 
 @app.route("/upload")
+@login_required
 def upload_page():
     return render_template("upload_dkb.html")
 
 
 @app.route("/penyajian")
+@login_required
 def penyajian_page():
     return render_template("penyajian_dkb.html")
 
@@ -425,6 +499,7 @@ def penyajian_guest_page():
 
 
 @app.route("/penyajian_dkb.html")
+@login_required
 def penyajian_dkb_page():
     return render_template("penyajian_dkb.html")
 
@@ -650,6 +725,7 @@ def penyajian_data():
 # ============================================================
 
 @app.post("/analyze")
+@login_required
 def analyze():
 
     # --------------------------------------------------------
@@ -1099,6 +1175,7 @@ def analyze():
 # ============================================================
 
 @app.post("/upload-db")
+@login_required
 def upload_db():
 
     # --------------------------------------------------------
@@ -1178,6 +1255,7 @@ def upload_db():
 # ============================================================
 
 @app.get("/export")
+@login_required
 def export():
 
     # --------------------------------------------------------

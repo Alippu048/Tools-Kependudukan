@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Lora:ital,wght@0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.44.0/iconfont/tabler-icons.min.css">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+<div class="mobile-topbar">
+    <div class="brand-inline">
+        <i class="ti ti-building-community"></i>
+        <span>DUKCAPIL YOGYAKARTA</span>
+    </div>
+    <button type="button" class="mobile-toggle" id="mobileToggle" aria-label="Buka menu navigasi" aria-expanded="false">
+        <i class="ti ti-menu-2"></i>
+    </button>
+</div>
+
+<div class="mobile-overlay" id="mobileOverlay"></div>
+
+<div class="app-layout" id="appLayout">
+    <aside class="sidebar" id="sidebar">
+        <div class="brand">
+            <span class="brand-badge"><i class="ti ti-shield-check"></i> DUKCAPIL YOGYAKARTA</span>
+            <div class="title">
+                <span class="title-icon"><i class="ti ti-database"></i></span>
+                <span>Tools Kependudukan</span>
+            </div>
+            <p class="sub">Kota Yogyakarta</p>
+        </div>
+
+        <div class="sidebar-divider"></div>
+        <div class="sidebar-section-label">Akses Portal</div>
+        <nav class="sidebar-nav">
+            <a href="{{ url_for('index') }}" class="active">
+                <i class="ti ti-smart-home"></i> Dashboard Umum
+            </a>
+            <a href="{{ url_for('penyajian_guest_page') }}">
+                <i class="ti ti-chart-pie-2"></i> Penyajian Data
+            </a>
+        </nav>
+
+        <div class="sidebar-foot">
+            <div class="system-status">
+                <div class="system-status-indicator"><span class="dot"></span><span>Sistem Aktif</span></div>
+                <span style="color:#64748b; font-size:10.5px;">DKB</span>
+            </div>
+        </div>
+    </aside>
+
+    <main class="content">
+        <div class="public-nav-row">
+            <div class="top-bar-crumbs">
+                {% include "_sidebar_toggle.html" %}
+                <i class="ti ti-home"></i>
+                <span class="current">Dashboard Umum</span>
+            </div>
+            <a class="public-login-link" href="{{ url_for('admin_login_page') }}">
+                <i class="ti ti-lock"></i> Login Admin
+            </a>
+        </div>
+
+        <div class="page-title">
+            <div>Tools Kependudukan</div>
+            <span style="font-size:12px; font-weight:600; color:var(--ink-500);">
+                <i class="ti ti-map-pin" style="color:var(--primary);"></i> Kota Yogyakarta
+            </span>
+        </div>
+
+        <section class="hero-banner">
+            <div class="hero-banner-inner">
+                <div class="hero-banner-badge"><i class="ti ti-database"></i> Data Kependudukan Bersih</div>
+                <h2>Dinas Kependudukan dan Pencatatan Sipil Kota Yogyakarta</h2>
+                <p>Gunakan portal untuk melihat penyajian data DKB atau masuk ke area administrasi untuk mengelola data.</p>
+                <div class="hero-meta">
+                    <span class="hero-pill"><i class="ti ti-chart-bar"></i> Penyajian data tersedia untuk umum</span>
+                    <span class="hero-pill"><i class="ti ti-lock"></i> Pengelolaan data khusus admin</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="feature-grid" aria-label="Pilihan akses portal">
+            <a href="{{ url_for('penyajian_guest_page') }}" class="feature-card">
+                <div class="feature-card-header">
+                    <div class="feature-card-icon blue"><i class="ti ti-chart-infographic"></i></div>
+                    <span class="feature-badge blue">Akses Publik</span>
+                </div>
+                <h3>Penyajian Data DKB</h3>
+                <p>Lihat tabel dan visualisasi data kependudukan berdasarkan periode, kategori, dan wilayah.</p>
+                <span class="feature-card-cta">Buka Penyajian Data <i class="ti ti-arrow-narrow-right"></i></span>
+            </a>
+
+        </section>
+    </main>
+</div>
+<script src="{{ url_for('static', filename='js/sidebar-toggle.js') }}"></script>
+<script>
+const mobileToggle = document.getElementById('mobileToggle');
+const mobileOverlay = document.getElementById('mobileOverlay');
+
+const sidebar = document.getElementById('sidebar');
+const setMobileSidebar = (open) => {
+    sidebar.classList.toggle('open', open);
+    mobileOverlay.classList.toggle('open', open);
+    mobileToggle.setAttribute('aria-expanded', String(open));
+    mobileToggle.setAttribute('aria-label', open ? 'Tutup menu navigasi' : 'Buka menu navigasi');
+    mobileToggle.innerHTML = open ? '<i class="ti ti-x"></i>' : '<i class="ti ti-menu-2"></i>';
+};
+
+mobileToggle.addEventListener('click', () => setMobileSidebar(!sidebar.classList.contains('open')));
+mobileOverlay.addEventListener('click', () => setMobileSidebar(false));
+</script>
+</body>
+</html>

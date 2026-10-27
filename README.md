@@ -41,6 +41,38 @@ Default:
 
 Nilai dapat diubah menggunakan environment variable `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, dan `DB_TABLE`.
 
+### Login Admin
+
+Login admin membaca pengguna dari tabel `SIAK_USER` pada database yang sama. Buat tabel MySQL berikut sebelum menjalankan aplikasi:
+
+```sql
+CREATE TABLE IF NOT EXISTS SIAK_USER (
+  SIAK_USER VARCHAR(20) NOT NULL PRIMARY KEY,
+  SIAK_PASSWORD VARCHAR(100) NULL,
+  FULLNAME VARCHAR(100) NULL,
+  NIP VARCHAR(18) NULL,
+  USER_LEVEL TINYINT NULL
+);
+```
+
+Untuk mengimpor akun contoh dari file SQL Oracle yang disertakan, gunakan tabel di atas lalu masukkan baris berikut di MySQL:
+
+```sql
+INSERT INTO SIAK_USER (SIAK_USER, SIAK_PASSWORD, FULLNAME, NIP, USER_LEVEL)
+VALUES ('admin', '21232f297a57a5a743894a0e4a801fc3', 'Ini Admin', '123', 0);
+```
+
+Akun contoh tersebut menggunakan password `admin`. Hash MD5 ini hanya didukung agar cocok dengan data sumber lama; MD5 tidak aman untuk penyimpanan password baru. Ganti password awal dan rencanakan migrasi ke hash password modern sebelum digunakan pada lingkungan produksi.
+
+Tetapkan `FLASK_SECRET_KEY` ke nilai rahasia yang kuat dan stabil agar sesi login tetap valid setelah aplikasi dimulai ulang. Contoh PowerShell untuk sesi terminal saat ini:
+
+```powershell
+$env:FLASK_SECRET_KEY = "ganti-dengan-rahasia-acak-yang-panjang"
+python app.py
+```
+
+Halaman admin, impor, unggah, ekspor, dan penyajian internal memerlukan login. Halaman penyajian tamu tetap tersedia tanpa login.
+
 Kolom hasil angka disimpan sebagai teks agar nilai sumber tetap sama, termasuk angka
 desimal di bawah 1 dan tanda koma lokal. Sesuaikan struktur tabel MySQL:
 

@@ -25,12 +25,6 @@ def normalisasi_kolom(column):
 
 # ============================================================
 # DETEKSI POLA L / P / JML
-# Mendukung variasi seperti:
-# LK_MMLK, PR_MMLK, JML_MMLK
-# LK_BLM_MLK, PR_BLM_MLK, JML_BLM_MLK
-# L_RLS, P_RLS, JML_RLS
-# RLS_L, RLS_P, RLS_JML
-# MEDIAN_L, MEDIAN_P, MEDIAN_JML
 # ============================================================
 
 TOTAL_PREFIXES = ("JML_", "JUMLAH_", "TOTAL_")
@@ -55,8 +49,6 @@ def parse_column(column):
     if col in SPECIAL_COLUMNS:
         return {"type": None, "descrip": None}
 
-    # Mendukung header sederhana: L, P, dan JML.
-    # Ketiganya dimasukkan ke satu grup default agar dapat dipasangkan.
     if col in ("L", "LK", "LAKI", "LAKI_LAKI"):
         return {"type": "male", "descrip": "DEFAULT"}
 

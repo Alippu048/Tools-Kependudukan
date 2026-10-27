@@ -31,13 +31,16 @@
 
     <main class="main">
         <header>
-            <div>
+            <div class="header-title-row">
+                {% include "_sidebar_toggle.html" %}
+                <div>
                 <p class="eyebrow">DATA MANAGEMENT</p>
                 <h1>Import File Excel</h1>
                 <p class="subtitle">
                     Pilih beberapa file sekaligus. Sistem membaca pola L/P/JML, mengambil DESCRIP
                     dari nama kolom, memetakan kode wilayah, lalu menggabungkan seluruh hasil.
                 </p>
+                </div>
             </div>
             <div class="status"><i></i> Local System</div>
         </header>
@@ -363,5 +366,6 @@ function escapeHtml(value) {
         .replaceAll("'", "&#039;");
 }
 </script>
+<script src="{{ url_for('static', filename='js/sidebar-toggle.js') }}"></script>
 </body>
 </html>

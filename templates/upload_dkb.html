@@ -70,6 +70,7 @@
     <!-- ============ MAIN CONTENT ============ -->
     <main class="content">
         <div class="top-bar-crumbs">
+            {% include "_sidebar_toggle.html" %}
             <a href="{{ url_for('home') }}"><i class="ti ti-home"></i> Beranda</a>
             <i class="ti ti-chevron-right"></i>
             <span>Penyajian Data</span>
@@ -181,6 +182,7 @@ if (mobileToggle && sidebar && mobileOverlay) {
 }
 </script>
 
+<script src="{{ url_for('static', filename='js/sidebar-toggle.js') }}"></script>
 <script src="{{ url_for('static', filename='js/upload-ui.js') }}"></script>
 </body>
 </html>

@@ -43,6 +43,9 @@
 
         <div class="sidebar-section-label">Navigasi Utama</div>
         <nav class="sidebar-nav">
+            <a href="{{ url_for('index') }}">
+                <i class="ti ti-smart-home"></i> Dashboard Umum
+            </a>
             <a href="{{ url_for('penyajian_guest_page') }}" class="active">
                 <i class="ti ti-chart-pie-2"></i> Penyajian DKB
             </a>
@@ -61,12 +64,18 @@
 
     <!-- ============ MAIN CONTENT ============ -->
     <main class="content">
-        <div class="top-bar-crumbs">
-            <a href="{{ url_for('home') }}"><i class="ti ti-home"></i> Beranda</a>
-            <i class="ti ti-chevron-right"></i>
-            <span>Penyajian Data</span>
-            <i class="ti ti-chevron-right"></i>
-            <span class="current">Tabel Pivot &amp; Visualisasi DKB</span>
+        <div class="public-nav-row">
+            <div class="top-bar-crumbs">
+                {% include "_sidebar_toggle.html" %}
+                <a href="{{ url_for('index') }}"><i class="ti ti-home"></i> Dashboard Umum</a>
+                <i class="ti ti-chevron-right"></i>
+                <span>Penyajian Data</span>
+                <i class="ti ti-chevron-right"></i>
+                <span class="current">Tabel Pivot &amp; Visualisasi DKB</span>
+            </div>
+            <a class="public-login-link" href="{{ url_for('admin_login_page') }}">
+                <i class="ti ti-lock"></i> Login Admin
+            </a>
         </div>
 
         <div class="page-title">
@@ -185,6 +194,7 @@ if (mobileToggle && sidebar && mobileOverlay) {
 }
 </script>
 
+<script src="{{ url_for('static', filename='js/sidebar-toggle.js') }}"></script>
 <script defer src="{{ url_for('static', filename='js/penyajian-ui.js') }}"></script>
 </body>
 </html>
