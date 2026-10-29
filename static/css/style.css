@@ -2033,4 +2033,33 @@ table.data-table tbody td strong {
 .login-btn-submit:disabled {
   opacity: .7;
   cursor: wait;
+}/* Dukungan kompatibilitas dashboard umum & login button */
+.public-login-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  flex: 0 0 auto;
+  padding: 8px 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink-800);
+  font-size: 12.5px;
+  font-weight: 700;
+  transition: background var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast);
+}
+.public-login-link i {
+  color: var(--primary);
+  font-size: 16px;
+}
+.public-login-link:hover {
+  background: var(--primary-light);
+  border-color: var(--primary-border);
+  color: var(--primary-hover);
+}
+
+.login-btn-submit:disabled {
+  opacity: .7;
+  cursor: wait;
 }
