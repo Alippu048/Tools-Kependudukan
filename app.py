@@ -437,7 +437,7 @@ def load_section_descrip_master():
 
 @app.route("/")
 def index():
-    return render_template("dashboard_umum.html")
+    return render_template("beranda.html")
 
 
 @app.route("/admin/login")
@@ -447,7 +447,7 @@ def admin_login_page():
     return render_template("login.html")
 
 
-@app.route("/login", methods=["POST"])
+@app.route("/login", methods=["GET", "POST"])
 def login_page():
     username = request.form.get("username", "").strip()
     password = request.form.get("password", "")
