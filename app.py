@@ -544,6 +544,8 @@ def penyajian_filter_options():
         "fungsi": [],
         "kecamatan": [],
         "kelurahan": [],
+        "rw": [],
+        "rt": [],
         "sect": []
     }
 
@@ -643,6 +645,29 @@ def penyajian_filter_options():
             })
         response["kelurahan"] = clean_kelurahan
 
+        cursor.execute(f"SHOW COLUMNS FROM `{table}`")
+        existing_cols = {row["Field"].upper() for row in cursor.fetchall()}
+
+        if "NO_RW" in existing_cols:
+            cursor.execute(
+                f"SELECT DISTINCT NO_KEL AS kelurahan, NO_RW AS value FROM `{table}` "
+                "WHERE NO_RW IS NOT NULL AND NO_RW <> '' ORDER BY NO_RW ASC"
+            )
+            response["rw"] = [
+                {"value": str(r["value"]), "label": f"RW {str(r['value']).zfill(2)}", "kelurahan": str(r.get("kelurahan") or "")}
+                for r in cursor.fetchall()
+            ]
+
+        if "NO_RT" in existing_cols:
+            cursor.execute(
+                f"SELECT DISTINCT NO_RW AS rw, NO_RT AS value FROM `{table}` "
+                "WHERE NO_RT IS NOT NULL AND NO_RT <> '' ORDER BY NO_RT ASC"
+            )
+            response["rt"] = [
+                {"value": str(r["value"]), "label": f"RT {str(r['value']).zfill(2)}", "rw": str(r.get("rw") or "")}
+                for r in cursor.fetchall()
+            ]
+
         response["tanggal"] = [
             {"value": item["value"], "label": item["value"]}
             for item in response["tanggal"]
@@ -679,44 +704,61 @@ def penyajian_data():
         "descrip": request.args.get("descrip", "").strip(),
         "no_kec": request.args.get("no_kec", "").strip(),
         "no_kel": request.args.get("no_kel", "").strip(),
+        "no_rw": request.args.get("no_rw", "").strip(),
+        "no_rt": request.args.get("no_rt", "").strip(),
         "sect": request.args.get("sect", "").strip()
     }
-
-    query = (
-        f"SELECT TANGGAL, NO_PROP, NO_KAB, NO_KEC, NO_KEL, LAKI_LAKI, "
-        f"PEREMPUAN, JUMLAH, NO, DESCRIP, SECT FROM `{table}` WHERE 1=1"
-    )
-    params = []
-
-    if filters["tanggal"]:
-        query += " AND TANGGAL = %s"
-        params.append(filters["tanggal"])
-
-    if filters["sect"]:
-        query += " AND LOWER(TRIM(SECT)) = LOWER(TRIM(%s))"
-        params.append(filters["sect"])
-    elif filters["descrip"]:
-        normalized_descrip = normalize_descrip_name(filters["descrip"])
-        query += " AND (LOWER(TRIM(DESCRIP)) = LOWER(TRIM(%s)) OR LOWER(TRIM(DESCRIP)) = LOWER(TRIM(%s)) OR LOWER(TRIM(REPLACE(DESCRIP, ' (DKB)', ''))) = LOWER(TRIM(%s)))"
-        params.extend([
-            filters["descrip"],
-            f"{filters['descrip']} (DKB)",
-            normalized_descrip
-        ])
-
-    if filters["no_kec"]:
-        query += " AND NO_KEC = %s"
-        params.append(filters["no_kec"])
-
-    if filters["no_kel"]:
-        query += " AND NO_KEL = %s"
-        params.append(filters["no_kel"])
-
-    query += " ORDER BY TANGGAL DESC, DESCRIP ASC, NO_KEC ASC, NO_KEL ASC"
 
     try:
         connection = get_mysql_connection()
         cursor = connection.cursor(dictionary=True)
+
+        cursor.execute(f"SHOW COLUMNS FROM `{table}`")
+        existing_cols = {row["Field"].upper() for row in cursor.fetchall()}
+
+        select_cols = ["TANGGAL", "NO_PROP", "NO_KAB", "NO_KEC", "NO_KEL"]
+        if "NO_RW" in existing_cols:
+            select_cols.append("NO_RW")
+        if "NO_RT" in existing_cols:
+            select_cols.append("NO_RT")
+        select_cols.extend(["LAKI_LAKI", "PEREMPUAN", "JUMLAH", "NO", "DESCRIP", "SECT"])
+
+        query = f"SELECT {', '.join(select_cols)} FROM `{table}` WHERE 1=1"
+        params = []
+
+        if filters["tanggal"]:
+            query += " AND TANGGAL = %s"
+            params.append(filters["tanggal"])
+
+        if filters["sect"]:
+            query += " AND LOWER(TRIM(SECT)) = LOWER(TRIM(%s))"
+            params.append(filters["sect"])
+        elif filters["descrip"]:
+            normalized_descrip = normalize_descrip_name(filters["descrip"])
+            query += " AND (LOWER(TRIM(DESCRIP)) = LOWER(TRIM(%s)) OR LOWER(TRIM(DESCRIP)) = LOWER(TRIM(%s)) OR LOWER(TRIM(REPLACE(DESCRIP, ' (DKB)', ''))) = LOWER(TRIM(%s)))"
+            params.extend([
+                filters["descrip"],
+                f"{filters['descrip']} (DKB)",
+                normalized_descrip
+            ])
+
+        if filters["no_kec"]:
+            query += " AND NO_KEC = %s"
+            params.append(filters["no_kec"])
+
+        if filters["no_kel"]:
+            query += " AND NO_KEL = %s"
+            params.append(filters["no_kel"])
+
+        if filters["no_rw"] and "NO_RW" in existing_cols:
+            query += " AND NO_RW = %s"
+            params.append(filters["no_rw"])
+
+        if filters["no_rt"] and "NO_RT" in existing_cols:
+            query += " AND NO_RT = %s"
+            params.append(filters["no_rt"])
+
+        query += " ORDER BY TANGGAL DESC, DESCRIP ASC, NO_KEC ASC, NO_KEL ASC"
         cursor.execute(query, params)
         rows = cursor.fetchall()
 
