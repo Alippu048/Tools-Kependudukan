@@ -474,15 +474,6 @@ def login_page():
         # Jika database belum aktif atau tabel SIAK_USER belum dibuat
         pass
 
-    # 2. Fallback akun admin lokal (agar tidak terhambat saat testing)
-    if username == "admin" and password in ("admin", "admin123"):
-        session.clear()
-        session.update({
-            "username": "admin",
-            "fullname": "Administrator",
-            "user_level": 0
-        })
-        return redirect(url_for("home"))
 
     return render_template("login.html", error="Username atau password tidak sesuai."), 401
 
