@@ -63,11 +63,13 @@ function getCurrentFilters() {
   const selectedFunction = getSelectedFunction();
 
   return {
-    tanggal: el.tanggal.value || '',
+    tanggal: el.tanggal?.value || '',
     descrip: parsed.descrip || (selectedFunction ? selectedFunction.value : ''),
     sect: parsed.sect || (selectedFunction ? (selectedFunction.sect || selectedFunction.section || '') : ''),
-    no_kec: el.kecamatan.value || '',
-    no_kel: el.kelurahan.value || ''
+    no_kec: el.kecamatan?.value || '',
+    no_kel: el.kelurahan?.value || '',
+    no_rw: el.rw?.value || '',
+    no_rt: el.rt?.value || ''
   };
 }
 
@@ -153,6 +155,61 @@ function refreshKelurahanOptions() {
   if (el.kelurahan && !selectedKec) {
     el.kelurahan.value = '';
   }
+  refreshRwOptions();
+}
+
+function refreshRwOptions() {
+  if (!el.rw) return;
+  const selectedKel = el.kelurahan?.value || '';
+  if (!selectedKel) {
+    el.rw.innerHTML = '<option value="">- Semua RW -</option>';
+    el.rw.disabled = true;
+    el.rw.value = '';
+    refreshRtOptions();
+    return;
+  }
+
+  let rwList = (filterState.rw || []).filter(
+    (item) => !item.kelurahan || String(item.kelurahan) === String(selectedKel)
+  );
+
+  if (!rwList.length) {
+    rwList = [];
+    for (let i = 1; i <= 20; i++) {
+      const code = String(i).padStart(2, '0');
+      rwList.push({ value: code, label: `RW ${code}` });
+    }
+  }
+
+  populateSelect(el.rw, rwList, '- Semua RW -');
+  el.rw.disabled = false;
+  refreshRtOptions();
+}
+
+function refreshRtOptions() {
+  if (!el.rt) return;
+  const selectedRw = el.rw?.value || '';
+  if (!selectedRw || el.rw.disabled) {
+    el.rt.innerHTML = '<option value="">- Semua RT -</option>';
+    el.rt.disabled = true;
+    el.rt.value = '';
+    return;
+  }
+
+  let rtList = (filterState.rt || []).filter(
+    (item) => !item.rw || String(item.rw) === String(selectedRw)
+  );
+
+  if (!rtList.length) {
+    rtList = [];
+    for (let i = 1; i <= 15; i++) {
+      const code = String(i).padStart(2, '0');
+      rtList.push({ value: code, label: `RT ${code}` });
+    }
+  }
+
+  populateSelect(el.rt, rtList, '- Semua RT -');
+  el.rt.disabled = false;
 }
 
 function loadFilterOptions() {
@@ -169,13 +226,16 @@ function loadFilterOptions() {
         tanggal: data.tanggal || [],
         fungsi: data.fungsi || [],
         kecamatan: data.kecamatan || [],
-        kelurahan: data.kelurahan || []
+        kelurahan: data.kelurahan || [],
+        rw: data.rw || [],
+        rt: data.rt || []
       };
 
       populateDateSelect(el.tanggal, filterState.tanggal, '- Semua tanggal -');
       populateFunctionSelect(el.fungsi, filterState.fungsi, '- Semua fungsi -');
       populateSelect(el.kecamatan, filterState.kecamatan, '- Semua kecamatan -');
       refreshKelurahanOptions();
+      refreshRwOptions();
       fetchFilteredData();
     })
     .catch((err) => {
@@ -269,10 +329,25 @@ function updateTitle(rows) {
   const title = (functionLabel || 'SEMUA FUNGSI').toUpperCase();
   const dateValue = el.tanggal?.value || (rows || []).find((row) => row.TANGGAL)?.TANGGAL || '';
 
+  const selectedKec = el.kecamatan?.value ? getKecamatanLabel(el.kecamatan.value) : '';
+  const selectedKel = el.kelurahan?.value ? getKelurahanLabel(el.kecamatan?.value, el.kelurahan.value) : '';
+  const selectedRw = el.rw?.value ? `RW ${el.rw.value}` : '';
+  const selectedRt = el.rt?.value ? `RT ${el.rt.value}` : '';
+
+  let subtitle = 'KOTA YOGYAKARTA';
+  const parts = [];
+  if (selectedKec && selectedKec !== '- Semua kecamatan -') parts.push(selectedKec.toUpperCase());
+  if (selectedKel) parts.push(`KEL. ${selectedKel.toUpperCase()}`);
+  if (selectedRw) parts.push(selectedRw);
+  if (selectedRt) parts.push(selectedRt);
+  if (parts.length) {
+    subtitle = parts.join(' · ');
+  }
+
   if (el.tableTitle) {
     el.tableTitle.innerHTML = `
       <strong>${escapeHtml(title)}</strong>
-      <span>KOTA YOGYAKARTA</span>
+      <span>${escapeHtml(subtitle)}</span>
       <span>${escapeHtml(formatReportMonth(dateValue))}</span>
     `;
   }
@@ -491,15 +566,20 @@ function bindFilterEvents() {
     el.btnCari.addEventListener('click', applyFilters);
   }
 
-  [el.tanggal, el.fungsi, el.kecamatan, el.kelurahan].forEach((element) => {
+  [el.tanggal, el.fungsi, el.kecamatan, el.kelurahan, el.rw, el.rt].forEach((element) => {
     if (!element) return;
 
     element.addEventListener('change', () => {
       if (element === el.kecamatan) {
         refreshKelurahanOptions();
-      }
-      if (element === el.kecamatan && !el.kecamatan.value) {
-        el.kelurahan.value = '';
+        if (!el.kecamatan.value && el.kelurahan) {
+          el.kelurahan.value = '';
+        }
+        refreshRwOptions();
+      } else if (element === el.kelurahan) {
+        refreshRwOptions();
+      } else if (element === el.rw) {
+        refreshRtOptions();
       }
       fetchFilteredData();
     });
