@@ -294,24 +294,36 @@ def load_section_descrip_master():
             if isinstance(source, list):
                 result = []
                 seen = set()
-                for item in source:
+                for idx, item in enumerate(source):
                     if not isinstance(item, dict):
                         continue
                     section = _clean_cell(item.get("section") or item.get("sect") or item.get("kode") or item.get("code"))
                     descrip = _clean_cell(item.get("descrip") or item.get("describ") or item.get("deskripsi") or item.get("name"))
                     if not section or not descrip:
                         continue
-                    label = _clean_cell(item.get("label") or descrip)
+                    label_raw = _clean_cell(item.get("short_label") or item.get("label") or descrip)
+                    label = re.sub(r"\s*\(SECT\s*\w+\)", "", label_raw, flags=re.IGNORECASE).strip()
                     status = _clean_cell(item.get("status") or "aktif")
                     key = (section, descrip)
                     if key in seen:
                         continue
                     seen.add(key)
+                    no_val = item.get("no") or (idx + 1)
+                    raw_descrip = _clean_cell(item.get("raw_descrip") or descrip)
+                    tipe_val = _clean_cell(item.get("tipe") or ("DKB" if "9" in section[1:2] or "(DKB)" in label else "Pelayanan"))
+                    has_umur_val = bool(item.get("has_umur"))
+                    short_label_val = re.sub(r"\s*\(SECT\s*\w+\)", "", _clean_cell(item.get("short_label") or label), flags=re.IGNORECASE).strip()
                     result.append({
+                        "no": no_val,
                         "section": section,
+                        "sect": section,
                         "descrip": descrip,
+                        "raw_descrip": raw_descrip,
+                        "tipe": tipe_val,
+                        "has_umur": has_umur_val,
                         "slug": _clean_cell(item.get("slug") or section.lower()),
                         "label": label,
+                        "short_label": short_label_val,
                         "status": status
                     })
                 if result:
@@ -470,6 +482,8 @@ def login_page():
             session.clear()
             session.update(user)
             return redirect(url_for("home"))
+    except mysql.connector.Error as err:
+        return render_template("login.html", error=f"Database service unavailable: {err}"), 503
     except Exception:
         # Jika database belum aktif atau tabel SIAK_USER belum dibuat
         pass
@@ -493,7 +507,7 @@ def home():
 @app.route("/import")
 @login_required
 def import_page():
-    return render_template("index.html")
+    return redirect(url_for("upload_page"))
 
 
 @app.route("/upload")
@@ -551,16 +565,26 @@ def penyajian_filter_options():
             name = _clean_cell(item.get("descrip"))
             section = _clean_cell(item.get("section") or item.get("sect") or item.get("section_name") or item.get("kode") or item.get("code"))
             normalized_name = normalize_descrip_name(name)
-            label = name or _clean_cell(item.get("label") or normalized_name)
+            tipe = item.get("tipe") or ("DKB" if "9" in section[1:2] else "Pelayanan")
+            has_umur = bool(item.get("has_umur"))
+            no_idx = item.get("no") or (len(ordered_fungsi) + 1)
+            raw_label = item.get("short_label") or item.get("label") or f"{no_idx}. [{tipe}] {normalized_name}"
+            clean_label = re.sub(r"\s*\(SECT\s*\w+\)", "", raw_label, flags=re.IGNORECASE).strip()
+            short_label = re.sub(r"\s*\(SECT\s*\w+\)", "", item.get("short_label") or clean_label, flags=re.IGNORECASE).strip()
 
             fung_key = (section.lower(), normalized_name.lower()) if section and normalized_name else ("", normalized_name.lower() if normalized_name else "")
             if normalized_name and fung_key not in seen_fungsi:
                 seen_fungsi.add(fung_key)
                 ordered_fungsi.append({
-                    "value": normalized_name,
-                    "label": normalized_name,
+                    "no": no_idx,
+                    "value": f"{normalized_name}|||{section}",
+                    "descrip": normalized_name,
+                    "label": clean_label,
+                    "short_label": short_label,
                     "section": section,
-                    "sect": section
+                    "sect": section,
+                    "tipe": tipe,
+                    "has_umur": has_umur
                 })
 
             if section and section not in seen_sect:
@@ -641,21 +665,32 @@ def penyajian_filter_options():
 
         if "NO_RW" in existing_cols:
             cursor.execute(
-                f"SELECT DISTINCT NO_KEL AS kelurahan, NO_RW AS value FROM `{table}` "
-                "WHERE NO_RW IS NOT NULL AND NO_RW <> '' ORDER BY NO_RW ASC"
+                f"SELECT DISTINCT NO_KEC AS kecamatan, NO_KEL AS kelurahan, NO_RW AS value FROM `{table}` "
+                "WHERE NO_RW IS NOT NULL AND NO_RW <> '' AND NO_RW <> 'Nul' ORDER BY CAST(NO_RW AS UNSIGNED) ASC"
             )
             response["rw"] = [
-                {"value": str(r["value"]), "label": f"RW {str(r['value']).zfill(2)}", "kelurahan": str(r.get("kelurahan") or "")}
+                {
+                    "value": str(r["value"]),
+                    "label": f"RW {int(r['value']):02d}" if str(r["value"]).isdigit() else f"RW {r['value']}",
+                    "kelurahan": str(r.get("kelurahan") or ""),
+                    "kecamatan": str(r.get("kecamatan") or "")
+                }
                 for r in cursor.fetchall()
             ]
 
         if "NO_RT" in existing_cols:
             cursor.execute(
-                f"SELECT DISTINCT NO_RW AS rw, NO_RT AS value FROM `{table}` "
-                "WHERE NO_RT IS NOT NULL AND NO_RT <> '' ORDER BY NO_RT ASC"
+                f"SELECT DISTINCT NO_KEC AS kecamatan, NO_KEL AS kelurahan, NO_RW AS rw, NO_RT AS value FROM `{table}` "
+                "WHERE NO_RT IS NOT NULL AND NO_RT <> '' AND NO_RT <> 'Nul' ORDER BY CAST(NO_RT AS UNSIGNED) ASC"
             )
             response["rt"] = [
-                {"value": str(r["value"]), "label": f"RT {str(r['value']).zfill(2)}", "rw": str(r.get("rw") or "")}
+                {
+                    "value": str(r["value"]),
+                    "label": f"RT {int(r['value']):02d}" if str(r["value"]).isdigit() else f"RT {r['value']}",
+                    "rw": str(r.get("rw") or ""),
+                    "kelurahan": str(r.get("kelurahan") or ""),
+                    "kecamatan": str(r.get("kecamatan") or "")
+                }
                 for r in cursor.fetchall()
             ]
 
@@ -690,15 +725,25 @@ def penyajian_filter_options():
 @app.get("/api/penyajian/data")
 def penyajian_data():
     table = DB_CONFIG["table"]
+    descrip_raw = request.args.get("descrip", "").strip()
+    sect_raw = request.args.get("sect", "").strip()
+    if "|||" in descrip_raw:
+        parts = descrip_raw.split("|||", 1)
+        descrip_raw = parts[0].strip()
+        if not sect_raw:
+            sect_raw = parts[1].strip()
+
     filters = {
         "tanggal": request.args.get("tanggal", "").strip(),
-        "descrip": request.args.get("descrip", "").strip(),
+        "descrip": descrip_raw,
         "no_kec": request.args.get("no_kec", "").strip(),
         "no_kel": request.args.get("no_kel", "").strip(),
         "no_rw": request.args.get("no_rw", "").strip(),
         "no_rt": request.args.get("no_rt", "").strip(),
-        "sect": request.args.get("sect", "").strip()
+        "sect": sect_raw
     }
+
+    age_sections = {"804", "894", "808", "898", "303", "393", "304", "394", "807", "897"}
 
     try:
         connection = get_mysql_connection()
@@ -707,12 +752,13 @@ def penyajian_data():
         cursor.execute(f"SHOW COLUMNS FROM `{table}`")
         existing_cols = {row["Field"].upper() for row in cursor.fetchall()}
 
-        select_cols = ["TANGGAL", "NO_PROP", "NO_KAB", "NO_KEC", "NO_KEL"]
-        if "NO_RW" in existing_cols:
-            select_cols.append("NO_RW")
-        if "NO_RT" in existing_cols:
-            select_cols.append("NO_RT")
-        select_cols.extend(["LAKI_LAKI", "PEREMPUAN", "JUMLAH", "NO", "DESCRIP", "SECT"])
+        # Urutan kolom standar: IDEM, TANGGAL, NO_PROP, NO_KAB, NO_KEC, NO_KEL, NO_RW, NO_RT, LAKI_LAKI, PEREMPUAN, JUMLAH, selanjutnya UMUR, NO, DESCRIP, SECT
+        ordered_candidates = [
+            "IDEM", "TANGGAL", "NO_PROP", "NO_KAB", "NO_KEC", "NO_KEL",
+            "NO_RW", "NO_RT", "LAKI_LAKI", "PEREMPUAN", "JUMLAH", "UMUR",
+            "NO", "DESCRIP", "SECT"
+        ]
+        select_cols = [c for c in ordered_candidates if c in existing_cols]
 
         query = f"SELECT {', '.join(select_cols)} FROM `{table}` WHERE 1=1"
         params = []
@@ -722,8 +768,25 @@ def penyajian_data():
             params.append(filters["tanggal"])
 
         if filters["sect"]:
+            sect_val = str(filters["sect"]).strip()
             query += " AND LOWER(TRIM(SECT)) = LOWER(TRIM(%s))"
-            params.append(filters["sect"])
+            params.append(sect_val)
+            if "UMUR" in existing_cols:
+                if sect_val in age_sections:
+                    query += " AND UMUR IS NOT NULL AND UMUR <> ''"
+                else:
+                    # Jika ada baris ringkasan tanpa UMUR (UMUR is null), prioritaskan baris tersebut
+                    # agar tidak terjadi perhitungan ganda jika file rincian umur juga diunggah.
+                    # Jika seluruh data hanya memiliki UMUR (seperti Golongan Darah KEL_UMUR), jangan filter NULL.
+                    check_cur = connection.cursor(dictionary=True)
+                    check_cur.execute(
+                        f"SELECT 1 FROM `{table}` WHERE LOWER(TRIM(SECT)) = LOWER(TRIM(%s)) AND (UMUR IS NULL OR UMUR = '') LIMIT 1",
+                        (sect_val,)
+                    )
+                    has_summary_rows = check_cur.fetchone() is not None
+                    check_cur.close()
+                    if has_summary_rows:
+                        query += " AND (UMUR IS NULL OR UMUR = '')"
         elif filters["descrip"]:
             normalized_descrip = normalize_descrip_name(filters["descrip"])
             query += " AND (LOWER(TRIM(DESCRIP)) = LOWER(TRIM(%s)) OR LOWER(TRIM(DESCRIP)) = LOWER(TRIM(%s)) OR LOWER(TRIM(REPLACE(DESCRIP, ' (DKB)', ''))) = LOWER(TRIM(%s)))"
@@ -742,14 +805,40 @@ def penyajian_data():
             params.append(filters["no_kel"])
 
         if filters["no_rw"] and "NO_RW" in existing_cols:
-            query += " AND NO_RW = %s"
-            params.append(filters["no_rw"])
+            rw_val = filters["no_rw"].strip()
+            if rw_val.isdigit():
+                query += " AND (NO_RW = %s OR LPAD(NO_RW, 3, '0') = LPAD(%s, 3, '0'))"
+                params.extend([rw_val, rw_val])
+            else:
+                query += " AND NO_RW = %s"
+                params.append(rw_val)
 
         if filters["no_rt"] and "NO_RT" in existing_cols:
-            query += " AND NO_RT = %s"
-            params.append(filters["no_rt"])
+            rt_val = filters["no_rt"].strip()
+            if rt_val.isdigit():
+                query += " AND (NO_RT = %s OR LPAD(NO_RT, 3, '0') = LPAD(%s, 3, '0'))"
+                params.extend([rt_val, rt_val])
+            else:
+                query += " AND NO_RT = %s"
+                params.append(rt_val)
 
-        query += " ORDER BY TANGGAL DESC, DESCRIP ASC, NO_KEC ASC, NO_KEL ASC"
+        # Hierarchy level scoping:
+        if not filters["no_kec"]:
+            # Level 0 (Semua Kecamatan / Kota): ambil ringkasan tingkat kecamatan
+            if "IDEM" in existing_cols:
+                query += " AND (IDEM = '3' OR (NO_KEC IS NOT NULL AND NO_KEC <> '' AND (NO_KEL IS NULL OR NO_KEL = '' OR NO_KEL = 'Nul')))"
+            else:
+                query += " AND NO_KEC IS NOT NULL AND NO_KEC <> '' AND (NO_KEL IS NULL OR NO_KEL = '' OR NO_KEL = 'Nul')"
+        elif filters["no_kec"] and not filters["no_kel"]:
+            # Level 1 (Kecamatan dipilih, belum pilih kelurahan): ambil ringkasan kelurahan
+            if "IDEM" in existing_cols:
+                query += " AND (IDEM = '4' OR (NO_KEL IS NOT NULL AND NO_KEL <> '' AND (NO_RW IS NULL OR NO_RW = '' OR NO_RW = 'Nul')))"
+            else:
+                query += " AND NO_KEL IS NOT NULL AND NO_KEL <> '' AND (NO_RW IS NULL OR NO_RW = '' OR NO_RW = 'Nul')"
+        # Level 2 (Kelurahan dipilih): ambil semua data dalam kelurahan tersebut (termasuk baris RW & RT)
+        # Level 3 (RW dipilih): ambil data dalam RW tersebut
+
+        query += " ORDER BY TANGGAL DESC, CAST(NO AS UNSIGNED) ASC, DESCRIP ASC, NO_KEC ASC, NO_KEL ASC, NO_RW ASC, NO_RT ASC"
         cursor.execute(query, params)
         rows = cursor.fetchall()
 
@@ -913,6 +1002,16 @@ def analyze():
                         sect_values[index]
                         .strip()
                     )
+
+                if sect:
+                    sect_match = re.match(r"^(\d+)", sect)
+                    if sect_match:
+                        sect = sect_match.group(1)
+
+                if not sect and filename:
+                    fname_match = re.search(r"\b(\d{3})\b", filename)
+                    if fname_match:
+                        sect = fname_match.group(1)
 
                 # --------------------------------------------
                 # Ambil TANGGAL manual

@@ -5,8 +5,8 @@ import pandas as pd
 import mysql.connector
 
 DATABASE_COLUMNS = [
-    "TANGGAL", "NO_PROP", "NO_KAB", "NO_KEC", "NO_KEL",
-    "LAKI_LAKI", "PEREMPUAN", "JUMLAH", "NO", "DESCRIP", "SECT"
+    "IDEM", "TANGGAL", "NO_PROP", "NO_KAB", "NO_KEC", "NO_KEL", "NO_RW", "NO_RT",
+    "LAKI_LAKI", "PEREMPUAN", "JUMLAH", "UMUR", "NO", "DESCRIP", "SECT"
 ]
 
 DATABASE_CONNECTION = None
@@ -31,12 +31,13 @@ TOTAL_PREFIXES = ("JML_", "JUMLAH_", "TOTAL_")
 MALE_PREFIXES = ("LAKI_LAKI_", "LAKI_", "LK_", "L_")
 FEMALE_PREFIXES = ("PEREMPUAN_", "PR_", "P_")
 
-TOTAL_SUFFIXES = ("_JUMLAH", "_JML", "_TOTAL")
-MALE_SUFFIXES = ("_LAKI_LAKI", "_LAKI", "_LK", "_L")
-FEMALE_SUFFIXES = ("_PEREMPUAN", "_PR", "_P")
+TOTAL_SUFFIXES = ("_JUMLAH", "_JML", "_TOTAL", " JML", " JUMLAH", " TOTAL")
+MALE_SUFFIXES = ("_LAKI_LAKI", "_LAKI", "_LK", "_L", " L", " LK", " LAKI", " LAKI_LAKI")
+FEMALE_SUFFIXES = ("_PEREMPUAN", "_PR", "_P", " P", " PR", " PEREMPUAN")
 
 SPECIAL_COLUMNS = {
-    "NO", "IDEM", "TANGGAL", "DATE", "WILAYAH",
+    "NO", "IDEM", "UMUR", "KEL_UMUR", "RENTANG_UMUR", "USIA", "KELOMPOK_UMUR",
+    "NO_RW", "NO_RT", "RW", "RT", "TANGGAL", "DATE", "WILAYAH", "WIL",
     "KODE", "KODE_WILAYAH", "KODE_WIL", "KODE_ADM",
     "KODE_KELURAHAN", "KODE_DESA", "KODE_KECAMATAN",
     "KODE_KEC", "NO_PROP", "NO_KAB", "NO_KEC", "NO_KEL"
@@ -44,6 +45,7 @@ SPECIAL_COLUMNS = {
 
 
 def parse_column(column):
+    raw = str(column).strip()
     col = normalisasi_kolom(column)
 
     if col in SPECIAL_COLUMNS:
@@ -58,31 +60,43 @@ def parse_column(column):
     if col in ("JML", "JUMLAH", "TOTAL"):
         return {"type": "total", "descrip": "DEFAULT"}
 
-    # Prefix harus dicek dari yang paling panjang.
+    # Suffixes (prioritas cek dari string mentah agar spasi terbaca)
+    for sfx in sorted(MALE_SUFFIXES, key=len, reverse=True):
+        if raw.upper().endswith(sfx) and len(raw) > len(sfx):
+            d = raw[:-len(sfx)].strip(" _")
+            if d and normalisasi_kolom(d) not in SPECIAL_COLUMNS:
+                return {"type": "male", "descrip": d}
+
+    for sfx in sorted(FEMALE_SUFFIXES, key=len, reverse=True):
+        if raw.upper().endswith(sfx) and len(raw) > len(sfx):
+            d = raw[:-len(sfx)].strip(" _")
+            if d and normalisasi_kolom(d) not in SPECIAL_COLUMNS:
+                return {"type": "female", "descrip": d}
+
+    for sfx in sorted(TOTAL_SUFFIXES, key=len, reverse=True):
+        if raw.upper().endswith(sfx) and len(raw) > len(sfx):
+            d = raw[:-len(sfx)].strip(" _")
+            if d and normalisasi_kolom(d) not in SPECIAL_COLUMNS:
+                return {"type": "total", "descrip": d}
+
+    # Prefixes
     for prefix in sorted(TOTAL_PREFIXES, key=len, reverse=True):
         if col.startswith(prefix) and col[len(prefix):]:
-            return {"type": "total", "descrip": col[len(prefix):].strip("_")}
+            d = col[len(prefix):].strip("_")
+            if d not in SPECIAL_COLUMNS:
+                return {"type": "total", "descrip": d}
 
     for prefix in sorted(MALE_PREFIXES, key=len, reverse=True):
         if col.startswith(prefix) and col[len(prefix):]:
-            return {"type": "male", "descrip": col[len(prefix):].strip("_")}
+            d = col[len(prefix):].strip("_")
+            if d not in SPECIAL_COLUMNS:
+                return {"type": "male", "descrip": d}
 
     for prefix in sorted(FEMALE_PREFIXES, key=len, reverse=True):
         if col.startswith(prefix) and col[len(prefix):]:
-            return {"type": "female", "descrip": col[len(prefix):].strip("_")}
-
-    # Suffix.
-    for suffix in sorted(TOTAL_SUFFIXES, key=len, reverse=True):
-        if col.endswith(suffix) and col[:-len(suffix)]:
-            return {"type": "total", "descrip": col[:-len(suffix)].strip("_")}
-
-    for suffix in sorted(MALE_SUFFIXES, key=len, reverse=True):
-        if col.endswith(suffix) and col[:-len(suffix)]:
-            return {"type": "male", "descrip": col[:-len(suffix)].strip("_")}
-
-    for suffix in sorted(FEMALE_SUFFIXES, key=len, reverse=True):
-        if col.endswith(suffix) and col[:-len(suffix)]:
-            return {"type": "female", "descrip": col[:-len(suffix)].strip("_")}
+            d = col[len(prefix):].strip("_")
+            if d not in SPECIAL_COLUMNS:
+                return {"type": "female", "descrip": d}
 
     return {"type": None, "descrip": None}
 
@@ -116,7 +130,7 @@ def detect_pattern_columns(df):
 
 
 # ============================================================
-# KODE WILAYAH
+# KODE WILAYAH & RW / RT
 # ============================================================
 
 def find_region_code_column(df):
@@ -139,14 +153,22 @@ def find_region_code_column(df):
         matches = 0
         for value in sample:
             clean = re.sub(r"\.0$", "", value)
-            if re.fullmatch(r"\d{2}(?:\.\d{2}){1,3}", clean):
+            if re.fullmatch(r"\d{2}(?:\.\d{2}){1,3}(?:\.RW(?:\.RT)?)?", clean, re.IGNORECASE):
                 matches += 1
             elif re.fullmatch(r"\d{4}|\d{6}|\d{10}", clean):
                 matches += 1
 
-        if matches >= max(1, int(len(sample) * 0.6)):
+        if matches >= max(1, int(len(sample) * 0.5)):
             return column
 
+    return None
+
+
+def find_wilayah_name_column(df):
+    for col in df.columns:
+        norm = normalisasi_kolom(col)
+        if norm in {"WILAYAH", "WIL", "NAMA_WILAYAH", "NAMA_WIL"}:
+            return col
     return None
 
 
@@ -188,6 +210,69 @@ def split_region_code(value):
     return result
 
 
+def parse_region_and_rwrt(kode, wil):
+    result = {
+        "NO_PROP": None, "NO_KAB": None, "NO_KEC": None, "NO_KEL": None,
+        "NO_RW": None, "NO_RT": None
+    }
+    if pd.isna(kode):
+        return result
+
+    s_kode = str(kode).strip()
+    s_wil = str(wil).strip() if not pd.isna(wil) else ""
+
+    if ".RW.RT" in s_kode.upper():
+        base = re.sub(r"\.RW\.RT.*$", "", s_kode, flags=re.IGNORECASE)
+        parts = base.split(".")
+        if len(parts) >= 1: result["NO_PROP"] = parts[0]
+        if len(parts) >= 2: result["NO_KAB"] = parts[1]
+        if len(parts) >= 3: result["NO_KEC"] = parts[2]
+        if len(parts) >= 4: result["NO_KEL"] = parts[3]
+        if "." in s_wil:
+            wparts = s_wil.split(".")
+            result["NO_RW"] = wparts[0]
+            result["NO_RT"] = wparts[1]
+        elif s_wil:
+            result["NO_RW"] = s_wil
+        return result
+
+    if ".RW" in s_kode.upper():
+        base = re.sub(r"\.RW.*$", "", s_kode, flags=re.IGNORECASE)
+        parts = base.split(".")
+        if len(parts) >= 1: result["NO_PROP"] = parts[0]
+        if len(parts) >= 2: result["NO_KAB"] = parts[1]
+        if len(parts) >= 3: result["NO_KEC"] = parts[2]
+        if len(parts) >= 4: result["NO_KEL"] = parts[3]
+        if s_wil:
+            result["NO_RW"] = s_wil
+        return result
+
+    clean = re.sub(r"\.0$", "", s_kode)
+    if "." in clean:
+        parts = clean.split(".")
+        if len(parts) >= 1: result["NO_PROP"] = parts[0]
+        if len(parts) >= 2: result["NO_KAB"] = parts[1]
+        if len(parts) >= 3: result["NO_KEC"] = parts[2]
+        if len(parts) >= 4: result["NO_KEL"] = parts[3]
+        return result
+
+    if clean.isdigit():
+        if len(clean) == 10:
+            result["NO_PROP"] = clean[0:2]
+            result["NO_KAB"] = clean[2:4]
+            result["NO_KEC"] = clean[4:6]
+            result["NO_KEL"] = clean[6:10]
+        elif len(clean) == 6:
+            result["NO_PROP"] = clean[0:2]
+            result["NO_KAB"] = clean[2:4]
+            result["NO_KEC"] = clean[4:6]
+        elif len(clean) == 4:
+            result["NO_PROP"] = clean[0:2]
+            result["NO_KAB"] = clean[2:4]
+
+    return result
+
+
 # ============================================================
 # ANGKA
 # ============================================================
@@ -220,8 +305,52 @@ def numeric_series(df, column):
 
 
 # ============================================================
-# PEMBENTUKAN DATA
+# DETEKSI UMUR & RW / RT KHUSUS
 # ============================================================
+
+def get_age_series(df):
+    for col in df.columns:
+        norm = normalisasi_kolom(col)
+        if norm in {"UMUR", "KEL_UMUR", "RENTANG_UMUR", "USIA", "KELOMPOK_UMUR"}:
+            def clean_age(val):
+                if pd.isna(val):
+                    return None
+                text = str(val).strip()
+                if text.upper() in {"", "-", "NULL", "NONE", "NAN"}:
+                    return None
+                if re.fullmatch(r"-?\d+\.0+", text):
+                    text = text.split(".", 1)[0]
+                return text or None
+            return df[col].map(clean_age).astype("object"), True
+
+    return pd.Series([None] * len(df), index=df.index, dtype="object"), False
+
+
+def source_text_series(df, target_column):
+    aliases = {
+        "NO_RW": {"NO_RW", "RW"},
+        "NO_RT": {"NO_RT", "RT"},
+        "UMUR": {"UMUR", "KEL_UMUR", "RENTANG_UMUR", "USIA", "KELOMPOK_UMUR"}
+    }
+    accepted_names = aliases.get(target_column, {target_column})
+    source_column = next(
+        (column for column in df.columns if normalisasi_kolom(column) in accepted_names),
+        None
+    )
+    if source_column is None:
+        return pd.Series([None] * len(df), index=df.index, dtype="object")
+
+    def to_text(value):
+        if pd.isna(value):
+            return None
+
+        text = str(value).strip()
+        if re.fullmatch(r"-?\d+\.0+", text):
+            return text.split(".", 1)[0]
+        return text or None
+
+    return df[source_column].map(to_text).astype("object")
+
 
 def add_region_columns(temp, df, region_column):
     for col in ["NO_PROP", "NO_KAB", "NO_KEC", "NO_KEL"]:
@@ -235,66 +364,173 @@ def add_region_columns(temp, df, region_column):
     return temp
 
 
-def create_from_pattern_groups(df, region_column, groups, sect=None, tanggal=None, nomor=None):
-    results = []
-
-    for descrip, group in groups.items():
-        male = group["male"]
-        female = group["female"]
-        total = group["total"]
-
-        if not any([male, female, total]):
-            continue
-
-        temp = pd.DataFrame(index=df.index)
-        temp["TANGGAL"] = tanggal
-        temp = add_region_columns(temp, df, region_column)
-
-        temp["LAKI_LAKI"] = numeric_series(df, male)
-        temp["PEREMPUAN"] = numeric_series(df, female)
-
-        if total:
-            temp["JUMLAH"] = numeric_series(df, total)
-        else:
-            # Jangan menghitung nilai yang tidak ada di sumber Excel.
-            temp["JUMLAH"] = None
-
-        temp["NO"] = nomor
-        temp["DESCRIP"] = descrip
-        temp["SECT"] = sect
-        results.append(temp[DATABASE_COLUMNS])
-
-    if not results:
-        return pd.DataFrame(columns=DATABASE_COLUMNS)
-
-    return pd.concat(results, ignore_index=True)
-
+# ============================================================
+# PEMBENTUKAN DATA (UNIVERSAL ENGINE)
+# ============================================================
 
 def create_database_output(df, sect=None, tanggal=None, nomor=None):
-    region_column = find_region_code_column(df)
+    if df is None or df.empty:
+        return pd.DataFrame(columns=DATABASE_COLUMNS), {
+            "region_column": None,
+            "groups": {},
+            "detected": []
+        }
+
+    # 1. Wilayah dasar (NO_PROP, NO_KAB, NO_KEC, NO_KEL, NO_RW, NO_RT)
+    has_direct_region = all(c in df.columns for c in ["NO_PROP", "NO_KAB", "NO_KEC", "NO_KEL"])
+    region_col = find_region_code_column(df)
+    wil_col = find_wilayah_name_column(df)
+
+    base_region = pd.DataFrame(index=df.index)
+    if has_direct_region:
+        for c in ["NO_PROP", "NO_KAB", "NO_KEC", "NO_KEL"]:
+            base_region[c] = df[c].map(lambda x: None if pd.isna(x) else str(x).strip())
+        base_region["NO_RW"] = None
+        base_region["NO_RT"] = None
+    elif region_col:
+        parsed_rows = [parse_region_and_rwrt(r[region_col], r[wil_col] if wil_col else None) for _, r in df.iterrows()]
+        parsed_df = pd.DataFrame(parsed_rows, index=df.index)
+        for c in ["NO_PROP", "NO_KAB", "NO_KEC", "NO_KEL", "NO_RW", "NO_RT"]:
+            base_region[c] = parsed_df[c].map(lambda x: None if pd.isna(x) else str(x))
+    else:
+        for c in ["NO_PROP", "NO_KAB", "NO_KEC", "NO_KEL", "NO_RW", "NO_RT"]:
+            base_region[c] = None
+
+    # RW dan RT: Hanya mengambil file yang memiliki data RW dan RT!
+    # Cek kolom eksplisit jika belum terisi dari KODE/WILAYAH
+    for col in df.columns:
+        norm = normalisasi_kolom(col)
+        if norm in {"NO_RW", "RW"} and base_region["NO_RW"].isna().all():
+            base_region["NO_RW"] = df[col].map(lambda x: None if pd.isna(x) else str(x).strip().replace(".0", ""))
+        if norm in {"NO_RT", "RT"} and base_region["NO_RT"].isna().all():
+            base_region["NO_RT"] = df[col].map(lambda x: None if pd.isna(x) else str(x).strip().replace(".0", ""))
+
+    # 2. IDEM: ambil langsung dari file jika ada, jika tidak ada tetap None
+    idem_series = source_text_series(df, "IDEM")
+
+    # 3. UMUR: Hanya mengambil file yang memiliki data umur!
+    age_series, file_has_age = get_age_series(df)
+
+    # 4. Deteksi Kolom Kategori Vertikal (isi sel adalah kategori)
+    cat_col = None
+    for col in df.columns:
+        norm = normalisasi_kolom(col)
+        if norm in {"PENDIDIKAN", "AGAMA", "PEKERJAAN", "STATUS_KAWIN", "STATUS_HUB_KELUARGA", "JENIS_DISABILITAS", "KATEGORI", "DESCRIP", "DESKRIPSI"}:
+            cat_col = col
+            break
+
+    # 5. Deteksi Pola Kolom Wide
     groups = find_pattern_groups(df)
 
-    if groups:
-        output = create_from_pattern_groups(
-            df,
-            region_column,
-            groups,
-            sect,
-            tanggal,
-            nomor
-        )
-        if not output.empty:
-            return output, {
-                "region_column": region_column,
-                "groups": groups,
-                "detected": detect_pattern_columns(df)
-            }
+    results = []
 
-    return pd.DataFrame(columns=DATABASE_COLUMNS), {
-        "region_column": region_column,
-        "groups": {},
+    # Pola A: Wide Pattern Groups
+    if groups and (not cat_col or len(groups) > 1):
+        all_numeric_groups = all(re.fullmatch(r"\d+|\d+-\d+", str(k)) for k in groups.keys())
+
+        for descrip_key, group in groups.items():
+            male, female, total = group["male"], group["female"], group["total"]
+            if not any([male, female, total]):
+                continue
+
+            temp = pd.DataFrame(index=df.index)
+            temp["IDEM"] = idem_series
+            temp["TANGGAL"] = tanggal
+            for c in ["NO_PROP", "NO_KAB", "NO_KEC", "NO_KEL", "NO_RW", "NO_RT"]:
+                temp[c] = base_region[c]
+
+            if all_numeric_groups:
+                temp["UMUR"] = str(descrip_key)
+                temp["DESCRIP"] = "Umur Tunggal"
+            else:
+                temp["UMUR"] = age_series if file_has_age else None
+                temp["DESCRIP"] = str(descrip_key)
+
+            temp["LAKI_LAKI"] = numeric_series(df, male)
+            temp["PEREMPUAN"] = numeric_series(df, female)
+            temp["JUMLAH"] = numeric_series(df, total) if total else None
+            temp["SECT"] = str(sect).strip() if sect else None
+            temp["NO"] = None
+            results.append(temp[DATABASE_COLUMNS])
+
+    # Pola B: Vertikal (Kategori di Isi Kolom/Baris)
+    elif cat_col:
+        male_col = next((c for c in df.columns if normalisasi_kolom(c) in {"L", "LK", "LAKI", "LAKI_LAKI"} or normalisasi_kolom(c).endswith(("_L", "_LK"))), None)
+        female_col = next((c for c in df.columns if normalisasi_kolom(c) in {"P", "PR", "PEREMPUAN"} or normalisasi_kolom(c).endswith(("_P", "_PR"))), None)
+        total_col = next((c for c in df.columns if normalisasi_kolom(c) in {"JML", "JUMLAH", "TOTAL"} or normalisasi_kolom(c).endswith(("_JML", "_TOTAL"))), None)
+
+        temp = pd.DataFrame(index=df.index)
+        temp["IDEM"] = idem_series
+        temp["TANGGAL"] = tanggal
+        for c in ["NO_PROP", "NO_KAB", "NO_KEC", "NO_KEL", "NO_RW", "NO_RT"]:
+            temp[c] = base_region[c]
+
+        temp["UMUR"] = age_series if file_has_age else None
+        temp["DESCRIP"] = df[cat_col].map(lambda x: None if pd.isna(x) else str(x).strip())
+        temp["LAKI_LAKI"] = numeric_series(df, male_col)
+        temp["PEREMPUAN"] = numeric_series(df, female_col)
+        temp["JUMLAH"] = numeric_series(df, total_col) if total_col else None
+        temp["SECT"] = str(sect).strip() if sect else None
+        temp["NO"] = None
+        results.append(temp[DATABASE_COLUMNS])
+
+    # Pola C: Kolom Langsung (Direct L / P / JML)
+    else:
+        male_col = next((c for c in df.columns if normalisasi_kolom(c) in {"L", "LK", "LAKI", "LAKI_LAKI"}), None)
+        female_col = next((c for c in df.columns if normalisasi_kolom(c) in {"P", "PR", "PEREMPUAN"}), None)
+        total_col = next((c for c in df.columns if normalisasi_kolom(c) in {"JML", "JUMLAH", "TOTAL"}), None)
+
+        if male_col or female_col or total_col:
+            temp = pd.DataFrame(index=df.index)
+            temp["IDEM"] = idem_series
+            temp["TANGGAL"] = tanggal
+            for c in ["NO_PROP", "NO_KAB", "NO_KEC", "NO_KEL", "NO_RW", "NO_RT"]:
+                temp[c] = base_region[c]
+
+            temp["UMUR"] = age_series if file_has_age else None
+            temp["DESCRIP"] = "DEFAULT"
+            temp["LAKI_LAKI"] = numeric_series(df, male_col)
+            temp["PEREMPUAN"] = numeric_series(df, female_col)
+            temp["JUMLAH"] = numeric_series(df, total_col) if total_col else None
+            temp["SECT"] = str(sect).strip() if sect else None
+            temp["NO"] = None
+            results.append(temp[DATABASE_COLUMNS])
+
+    if not results:
+        return pd.DataFrame(columns=DATABASE_COLUMNS), {
+            "region_column": region_col,
+            "groups": groups,
+            "detected": detect_pattern_columns(df)
+        }
+
+    combined = pd.concat(results, ignore_index=True)
+
+    # 6. ATURAN NOMOR:
+    # "nomer yang tersedia pada tabel data_laporan_penduduk adalah nomer urutan deskrip
+    # dari 1 file dengan sect yang sama, lalu fungsi data agregat dibedakan menggunakan nomer SECT,
+    # no hanya fokus pada nomer deskript."
+    unique_descrips = []
+    for d in combined["DESCRIP"]:
+        if pd.notna(d) and d not in unique_descrips:
+            unique_descrips.append(d)
+
+    desc_to_no = {d: str(idx + 1) for idx, d in enumerate(unique_descrips)}
+    combined["NO"] = combined["DESCRIP"].map(lambda d: desc_to_no.get(d, "1"))
+
+    for col in DATABASE_COLUMNS:
+        if col in combined.columns:
+            combined[col] = pd.Series([None if pd.isna(x) else x for x in combined[col]], dtype=object)
+
+    return combined, {
+        "region_column": region_col,
+        "groups": groups,
         "detected": detect_pattern_columns(df)
     }
+
+
+def create_from_pattern_groups(df, region_column, groups, sect=None, tanggal=None, nomor=None):
+    output, _ = create_database_output(df, sect=sect, tanggal=tanggal, nomor=nomor)
+    return output
 
 
 # ============================================================
@@ -309,16 +545,15 @@ def analyze_file(file_path, sect=None, tanggal=None, nomor=None):
         "rows": len(df),
         "columns": len(df.columns),
         "column_names": [str(c) for c in df.columns],
-        "region_column": meta["region_column"],
-        "groups": meta["groups"],
-        "detected": meta["detected"],
+        "region_column": meta.get("region_column"),
+        "groups": meta.get("groups", {}),
+        "detected": meta.get("detected", []),
         "database_df": database_df
     }
 
 
 # ============================================================
 # ANALISIS BANYAK FILE
-# files = [{"path": ..., "filename": ..., "sect": ...}, ...]
 # ============================================================
 
 def analyze_files(files):
@@ -347,8 +582,8 @@ def analyze_files(files):
                 "detected": result["detected"],
                 "database_rows": len(database_df),
                 "sect": sect,
-                "tanggal": tanggal
-                ,"nomor": nomor
+                "tanggal": tanggal,
+                "nomor": nomor
             })
 
             if not database_df.empty:
@@ -366,8 +601,8 @@ def analyze_files(files):
                 "detected": [],
                 "database_rows": 0,
                 "sect": sect,
-                "tanggal": tanggal
-                ,"nomor": nomor
+                "tanggal": tanggal,
+                "nomor": nomor
             })
 
     if all_database:

@@ -74,9 +74,16 @@ python app.py
 Halaman admin, impor, unggah, ekspor, dan penyajian internal memerlukan login. Halaman penyajian tamu tetap tersedia tanpa login.
 
 Kolom hasil angka disimpan sebagai teks agar nilai sumber tetap sama, termasuk angka
-desimal di bawah 1 dan tanda koma lokal. Sesuaikan struktur tabel MySQL:
+desimal di bawah 1 dan tanda koma lokal. Pastikan tabel memiliki kolom IDEM, UMUR,
+NO_RW, dan NO_RT. Jalankan penambahan kolom berikut hanya untuk kolom yang belum ada:
 
 ```sql
+ALTER TABLE DATA_LAPORAN_PENDUDUK
+ADD COLUMN IDEM VARCHAR(50) NULL,
+ADD COLUMN UMUR VARCHAR(20) NULL,
+ADD COLUMN NO_RW VARCHAR(10) NULL,
+ADD COLUMN NO_RT VARCHAR(10) NULL;
+
 ALTER TABLE DATA_LAPORAN_PENDUDUK
 MODIFY NO_PROP VARCHAR(10),
 MODIFY NO_KAB VARCHAR(10),

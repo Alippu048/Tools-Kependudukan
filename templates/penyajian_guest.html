@@ -133,10 +133,23 @@
                     </select>
                 </div>
 
-                <div class="field">
-                    <label for="f-fungsi"><i class="ti ti-category"></i> Fungsi / Kategori Laporan</label>
+                <div class="field field-fungsi-wrap">
+                    <div class="field-label-row">
+                        <label for="f-fungsi"><i class="ti ti-category"></i> Fungsi / Kategori Laporan</label>
+                        <div class="tipe-filter-tabs" id="tipeFilterTabs" role="tablist" aria-label="Filter Tipe Agregat">
+                            <button type="button" class="tab-pill active" data-tipe="all" title="Tampilkan Semua Fungsi (40)">
+                                <i class="ti ti-layout-grid"></i> Semua (40)
+                            </button>
+                            <button type="button" class="tab-pill tab-dkb" data-tipe="DKB" title="Tampilkan Data Konsolidasi Bersih / DKB (19)">
+                                <i class="ti ti-shield-check"></i> Data DKB (19)
+                            </button>
+                            <button type="button" class="tab-pill tab-pelayanan" data-tipe="Pelayanan" title="Tampilkan Data Pelayanan (21)">
+                                <i class="ti ti-id-badge-2"></i> Data Pelayanan (21)
+                            </button>
+                        </div>
+                    </div>
                     <select id="f-fungsi">
-                        <option value="">- Semua deskripsi -</option>
+                        <option value="">- Semua fungsi (40 agregat) -</option>
                     </select>
                 </div>
 
@@ -169,13 +182,10 @@
                 </div>
             </div>
 
-            <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; margin-top:20px; flex-wrap:wrap; border-top:1px solid var(--line-subtle); padding-top:14px;">
+            <div style="margin-top:16px; border-top:1px solid var(--line-subtle); padding-top:12px;">
                 <small style="color:var(--ink-500); display:flex; align-items:center; gap:6px;">
-                    <i class="ti ti-info-circle"></i> Filter RW dan RT aktif otomatis saat data rincian tersedia pada tingkat kelurahan terpilih.
+                    <i class="ti ti-info-circle"></i> Data tersaji otomatis setiap kali filter dipilih. Opsi RW dan RT aktif otomatis sesuai kelurahan yang dipilih.
                 </small>
-                <button class="btn btn-primary" id="btn-cari" type="button">
-                    <i class="ti ti-search" aria-hidden="true"></i> Tampilkan Data
-                </button>
             </div>
         </div>
 
@@ -216,7 +226,7 @@
             </div>
         </div>
 
-        <p class="source-note">
+        <p class="source-note" id="source-note">
             <i class="ti ti-check"></i> Sumber Data: Konsolidasi Bersih (DKB) Dinas Kependudukan dan Pencatatan Sipil Kota Yogyakarta
         </p>
     </main>

@@ -28,6 +28,7 @@ function renderFileList() {
   if (!selectedFiles.length) return;
 
   selectedFiles.forEach((file, index) => {
+    const detectedSect = detectSectFromFilename(file.name);
     const row = document.createElement("div");
     row.className = "file-row";
     row.innerHTML = `
@@ -40,15 +41,11 @@ function renderFileList() {
       </div>
       <label class="sect-field">
         <span>SECT</span>
-        <input type="text" data-sect-index="${index}" placeholder="Contoh: DKB">
+        <input type="text" data-sect-index="${index}" list="sectOptions" value="${escapeHtml(detectedSect)}" placeholder="Pilih / ketik SECT (mis. 801, 891)">
       </label>
       <label class="sect-field">
         <span>TANGGAL</span>
         <input type="date" data-tanggal-index="${index}">
-      </label>
-      <label class="sect-field">
-        <span>NO</span>
-        <input type="text" data-nomor-index="${index}" placeholder="No urut">
       </label>
       <button type="button" class="remove-file" data-remove="${index}" title="Hapus dari daftar">
         <i class="ti ti-trash"></i>
@@ -140,10 +137,6 @@ form.addEventListener("submit", async (event) => {
     formData.append("tanggal", input.value);
   });
 
-  document.querySelectorAll("[data-nomor-index]").forEach((input) => {
-    formData.append("nomor", input.value.trim());
-  });
-
   try {
     const response = await fetch("/analyze", {
       method: "POST",
@@ -206,7 +199,6 @@ function renderFileResults(files) {
         <div><b>Kode wilayah:</b> ${escapeHtml(file.region_column || "Tidak ditemukan")}</div>
         <div><b>SECT:</b> ${escapeHtml(file.sect || "Belum diisi")}</div>
         <div><b>Tanggal:</b> ${escapeHtml(file.tanggal || "Belum diisi")}</div>
-        <div><b>NO:</b> ${escapeHtml(file.nomor || "Belum diisi")}</div>
         <div><b>Status:</b> ${escapeHtml(file.message)}</div>
       </div>
       ${groupsHtml ? `<div class="mapping-grid">${groupsHtml}</div>` : '<div class="empty">Tidak ditemukan pola L/P/JML.</div>'}
@@ -224,7 +216,18 @@ function renderTable(rows) {
     return;
   }
 
-  const headers = Object.keys(rows[0]);
+  // Urutan kolom: IDEM, TANGGAL, NO_PROP hingga NO_RT, LAKI_LAKI, PEREMPUAN, JUMLAH, selanjutnya bebas
+  const preferredOrder = [
+    "IDEM", "TANGGAL", "NO_PROP", "NO_KAB", "NO_KEC", "NO_KEL", "NO_RW", "NO_RT",
+    "LAKI_LAKI", "PEREMPUAN", "JUMLAH", "UMUR", "NO", "DESCRIP", "SECT"
+  ];
+
+  const firstRowKeys = Object.keys(rows[0]);
+  const headers = [
+    ...preferredOrder.filter((k) => firstRowKeys.includes(k)),
+    ...firstRowKeys.filter((k) => !preferredOrder.includes(k))
+  ];
+
   const head = document.createElement("thead");
   head.innerHTML = `
     <tr>
@@ -264,3 +267,33 @@ document.getElementById("dbButton").addEventListener("click", async () => {
     button.textContent = "Upload ke database";
   }
 });
+
+let masterFungsiList = [];
+
+function detectSectFromFilename(name) {
+  if (!name) return "";
+  const match = String(name).match(/\b(\d{3})\b/);
+  return match ? match[1] : "";
+}
+
+async function loadSectOptions() {
+  try {
+    const res = await fetch("/api/penyajian/filter-options");
+    const json = await res.json();
+    if (json.success && json.data && json.data.fungsi) {
+      masterFungsiList = json.data.fungsi;
+      let datalist = document.getElementById("sectOptions");
+      if (!datalist) {
+        datalist = document.createElement("datalist");
+        datalist.id = "sectOptions";
+        document.body.appendChild(datalist);
+      }
+      datalist.innerHTML = masterFungsiList.map((item) => {
+        return `<option value="${escapeHtml(item.sect)}">${escapeHtml(item.no)}. [${escapeHtml(item.tipe)}] ${escapeHtml(item.descrip)} (SECT ${escapeHtml(item.sect)})</option>`;
+      }).join("");
+    }
+  } catch (e) {
+    console.warn("Could not load sect options", e);
+  }
+}
+loadSectOptions();

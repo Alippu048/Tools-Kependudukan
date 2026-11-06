@@ -74,15 +74,6 @@
                     <span class="nav-desc">Pemetaan &amp; Simpan Database</span>
                 </div>
             </a>
-            <a href="{{ url_for('import_page') }}" data-tooltip="Sistem Import Cepat: Batch Aggregator">
-                <div class="nav-icon-wrap">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg>
-                </div>
-                <div class="nav-label-wrap">
-                    <span class="nav-title">Sistem Import Cepat</span>
-                    <span class="nav-desc">Batch File Agregat DKB</span>
-                </div>
-            </a>
         </nav>
 
         <div class="sidebar-foot">
@@ -186,6 +177,13 @@
                 </label>
 
                 <div id="fileList" class="file-list"></div>
+                <datalist id="sectOptions"></datalist>
+                <div style="background:var(--surface-alt); border:1px solid var(--line); border-radius:var(--radius-md); padding:10px 14px; font-size:12px; color:var(--ink-600); margin:12px 0; display:flex; align-items:flex-start; gap:8px;">
+                    <i class="ti ti-info-circle" style="font-size:16px; color:var(--primary); margin-top:2px;"></i>
+                    <div>
+                        <strong>Petunjuk Kolom Database:</strong> Nomor urut (<code>NO</code>) pada tabel <code>DATA_LAPORAN_PENDUDUK</code> otomatis dihitung per file untuk urutan deskripsi (1, 2, 3...) pada SECT yang sama. Kolom <code>UMUR</code>, <code>NO_RW</code>, dan <code>NO_RT</code> hanya diisi jika file sumber memuat data tersebut.
+                    </div>
+                </div>
 
                 <div class="actions">
                     <button type="button" class="btn" id="clearButton">
